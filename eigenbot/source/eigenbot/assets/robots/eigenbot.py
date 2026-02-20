@@ -35,7 +35,7 @@ from pathlib import Path
 
 current_path = Path(__file__).parent.parent.resolve()
 
-EIGENBOT_USD_PATH = f"{current_path}/data/"
+EIGENBOT_USD_PATH = f"{current_path}/data/usd/eigenbot.usd"
 
 ##
 # Configuration - Actuators.

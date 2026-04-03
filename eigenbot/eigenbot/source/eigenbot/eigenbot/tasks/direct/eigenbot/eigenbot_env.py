@@ -221,6 +221,15 @@ class EigenbotEnv(DirectRLEnv):
         else:
             self.friction_coeffs_tensor = torch.ones(ne, 1, device=dev)
 
+        # Cache default physics values for DR (re-randomization is relative to these)
+        self._default_masses = self.robot.root_physx_view.get_masses().clone()
+        self._default_inertias = self.robot.root_physx_view.get_inertias().clone()
+        self._default_coms = self.robot.root_physx_view.get_coms().clone()
+        self._default_materials = self.robot.root_physx_view.get_material_properties().clone()
+        self._default_stiffness = self.robot.data.default_joint_stiffness.clone()
+        self._default_damping = self.robot.data.default_joint_damping.clone()
+        self._base_body_idx, _ = self.robot.find_bodies("base_link")
+
         # DOF position limits (from URDF: ±π/2 for bendy joints)
         soft = self.cfg.rewards.soft_dof_pos_limit
         lower = self.robot.data.soft_joint_pos_limits[0, :, 0]  # (nj,)
@@ -236,6 +245,10 @@ class EigenbotEnv(DirectRLEnv):
 
         # Common step counter
         self.common_step_counter = 0
+
+        # Apply initial domain randomization to physics
+        all_ids = torch.arange(self.num_envs, device=self.device)
+        self._apply_domain_randomization(all_ids)
 
     # ------------------------------------------------------------------
     # Reward function dispatch
@@ -292,9 +305,15 @@ class EigenbotEnv(DirectRLEnv):
             targets = self._action_scale * self.actions + self.default_dof_pos
         self.robot.set_joint_position_target(targets)
 
+        if self.cfg.domain_rand.randomize_motor:
+            p_gains = self._p_gain * self.motor_strength[0]
+            d_gains = self._d_gain * self.motor_strength[1]
+        else:
+            p_gains = self._p_gain
+            d_gains = self._d_gain
         self.torques = (
-            self._p_gain * (targets - self.robot.data.joint_pos)
-            - self._d_gain * self.robot.data.joint_vel
+            p_gains * (targets - self.robot.data.joint_pos)
+            - d_gains * self.robot.data.joint_vel
         )
         torque_limit = self.cfg.rewards.torque_limit_hard
         self.torques = torch.clamp(self.torques, -torque_limit, torque_limit)
@@ -353,12 +372,28 @@ class EigenbotEnv(DirectRLEnv):
         # Resample commands
         self._resample_commands(env_ids)
 
-        # Re-randomize motor strength on reset
+        # Re-randomize domain randomization params on reset
         if self.cfg.domain_rand.randomize_motor:
             rng = self.cfg.domain_rand.motor_strength_range
             self.motor_strength[:, env_ids] = (
                 (rng[1] - rng[0]) * torch.rand(2, len(env_ids), self.num_joints, device=self.device) + rng[0]
             )
+        if self.cfg.domain_rand.randomize_friction:
+            f_rng = self.cfg.domain_rand.friction_range
+            self.friction_coeffs_tensor[env_ids] = (
+                (f_rng[1] - f_rng[0]) * torch.rand(len(env_ids), 1, device=self.device) + f_rng[0]
+            )
+        if self.cfg.domain_rand.randomize_base_mass:
+            rng = self.cfg.domain_rand.added_mass_range
+            self.mass_params_tensor[env_ids, 0] = (
+                (rng[1] - rng[0]) * torch.rand(len(env_ids), device=self.device) + rng[0]
+            )
+        if self.cfg.domain_rand.randomize_base_com:
+            rng = self.cfg.domain_rand.added_com_range
+            self.mass_params_tensor[env_ids, 1:] = (
+                (rng[1] - rng[0]) * torch.rand(len(env_ids), 3, device=self.device) + rng[0]
+            )
+        self._apply_domain_randomization(env_ids)
 
     # ------------------------------------------------------------------
     # Post-physics update (called before observations)
@@ -586,6 +621,44 @@ class EigenbotEnv(DirectRLEnv):
         lin_vel[:, 0:2] = rand_vel
         velocities = torch.cat([lin_vel, ang_vel], dim=-1)
         self.robot.write_root_velocity_to_sim(velocities)
+
+    def _apply_domain_randomization(self, env_ids):
+        """Write sampled DR parameters into the physics engine."""
+        env_ids_cpu = torch.tensor(env_ids, device="cpu") if not isinstance(env_ids, torch.Tensor) else env_ids.cpu()
+
+        if self.cfg.domain_rand.randomize_friction:
+            materials = self._default_materials.clone()
+            friction = self.friction_coeffs_tensor[env_ids].cpu()
+            materials[env_ids_cpu, :, 0] = friction.expand(-1, materials.shape[1])
+            materials[env_ids_cpu, :, 1] = friction.expand(-1, materials.shape[1])
+            self.robot.root_physx_view.set_material_properties(materials, env_ids_cpu)
+
+        if self.cfg.domain_rand.randomize_base_mass:
+            masses = self._default_masses.clone()
+            base_idx = self._base_body_idx
+            mass_offset = self.mass_params_tensor[env_ids, 0:1].cpu()
+            masses[env_ids_cpu[:, None], base_idx] += mass_offset
+            masses = torch.clamp(masses, min=1e-6)
+            self.robot.root_physx_view.set_masses(masses, env_ids_cpu)
+            ratios = masses[env_ids_cpu[:, None], base_idx] / self._default_masses[env_ids_cpu[:, None], base_idx]
+            inertias = self._default_inertias.clone()
+            inertias[env_ids_cpu[:, None], base_idx] = (
+                self._default_inertias[env_ids_cpu[:, None], base_idx] * ratios[..., None]
+            )
+            self.robot.root_physx_view.set_inertias(inertias, env_ids_cpu)
+
+        if self.cfg.domain_rand.randomize_base_com:
+            coms = self._default_coms.clone()
+            base_idx = self._base_body_idx
+            com_offset = self.mass_params_tensor[env_ids, 1:4].cpu()
+            coms[env_ids_cpu[:, None], base_idx, :3] += com_offset.unsqueeze(1)
+            self.robot.root_physx_view.set_coms(coms, env_ids_cpu)
+
+        if self.cfg.domain_rand.randomize_motor:
+            scaled_stiffness = self._default_stiffness[env_ids] * self.motor_strength[0, env_ids]
+            scaled_damping = self._default_damping[env_ids] * self.motor_strength[1, env_ids]
+            self.robot.write_joint_stiffness_to_sim(scaled_stiffness, env_ids=env_ids)
+            self.robot.write_joint_damping_to_sim(scaled_damping, env_ids=env_ids)
 
     # ------------------------------------------------------------------
     # Height measurements

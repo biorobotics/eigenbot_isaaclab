@@ -10,13 +10,14 @@ from __future__ import annotations
 import math
 import os
 import torch
+import torch.nn.functional as F
 from collections.abc import Sequence
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import Articulation
 from isaaclab.envs import DirectRLEnv
-from isaaclab.sensors import ContactSensor, RayCaster
-from isaaclab.utils.math import quat_apply, wrap_to_pi
+from isaaclab.sensors import ContactSensor, RayCaster, TiledCamera
+from isaaclab.utils.math import quat_apply, quat_from_euler_xyz, quat_mul, wrap_to_pi
 
 from .eigenbot_env_cfg import (
     EigenbotEnvCfg,
@@ -66,6 +67,7 @@ class EigenbotEnv(DirectRLEnv):
 
         # Initialize all state buffers
         self._init_buffers()
+        self._randomize_depth_camera_pose()
 
         # Prepare reward function dispatch
         self._prepare_reward_functions()
@@ -87,12 +89,18 @@ class EigenbotEnv(DirectRLEnv):
         self._height_scanner = RayCaster(self.cfg.height_scanner)
         self.scene.sensors["height_scanner"] = self._height_scanner
 
+        self._depth_camera = None
+        if self.cfg.depth_camera.use_camera:
+            self._depth_camera = TiledCamera(self.cfg.depth_camera.sensor)
+
         self.scene.clone_environments(copy_from_source=False)
         if self.device == "cpu":
             self.scene.filter_collisions(global_prim_paths=[self.cfg.terrain.prim_path])
 
         self.scene.articulations["robot"] = self.robot
         self.scene.sensors["contact_sensor"] = self.contact_sensor
+        if self._depth_camera is not None:
+            self.scene.sensors["depth_camera"] = self._depth_camera
 
         light_cfg = sim_utils.DomeLightCfg(intensity=2000.0, color=(0.75, 0.75, 0.75))
         light_cfg.func("/World/Light", light_cfg)
@@ -188,6 +196,12 @@ class EigenbotEnv(DirectRLEnv):
 
         # Measured heights (flat terrain: zeros)
         self.measured_heights = torch.zeros(ne, N_SCAN, device=dev)
+
+        if self.cfg.depth_camera.use_camera:
+            depth_h, depth_w = self.cfg.depth_camera.resized[1], self.cfg.depth_camera.resized[0]
+            self.depth_buffer = torch.zeros(
+                ne, self.cfg.depth_camera.buffer_len, depth_h, depth_w, device=dev
+            )
 
         # Domain randomization buffers
         str_rng = self.cfg.domain_rand.motor_strength_range
@@ -301,9 +315,14 @@ class EigenbotEnv(DirectRLEnv):
 
     def _get_observations(self) -> dict:
         self._post_physics_update()
+        depth_updated = self._update_depth_buffer()
         obs = self._compute_observations()
         clip_val = self.cfg.normalization.clip_observations
         obs = torch.clamp(obs, -clip_val, clip_val)
+        self.extras["depth"] = None
+        if self.cfg.depth_camera.use_camera and depth_updated:
+            depth_idx = -2 if self.cfg.depth_camera.buffer_len > 1 else -1
+            self.extras["depth"] = self.depth_buffer[:, depth_idx].clone()
         return {"policy": obs}
 
     def _get_rewards(self) -> torch.Tensor:
@@ -312,9 +331,25 @@ class EigenbotEnv(DirectRLEnv):
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
         return self._check_termination()
 
+    def _update_terrain_curriculum(self, env_ids: torch.Tensor) -> None:
+        """Advance or regress terrain difficulty using the legacy distance heuristic."""
+        if self.cfg.terrain.terrain_type != "generator" or self._terrain.terrain_origins is None:
+            return
+
+        distance = torch.norm(
+            self.robot.data.root_pos_w[env_ids, :2] - self._terrain.env_origins[env_ids, :2], dim=1
+        )
+        move_up = distance > (self.cfg.terrain.terrain_generator.size[0] / 2.0)
+        move_down = (
+            distance < torch.abs(self.commands[env_ids, 0]) * self.max_episode_length_s * 0.5
+        ) & (~move_up)
+        self._terrain.update_env_origins(env_ids, move_up, move_down)
+
     def _reset_idx(self, env_ids: Sequence[int] | None):
         if env_ids is None:
             env_ids = self.robot._ALL_INDICES
+        env_ids = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
+        self._update_terrain_curriculum(env_ids)
         super()._reset_idx(env_ids)
 
         # Reset DOF state with randomization
@@ -593,6 +628,66 @@ class EigenbotEnv(DirectRLEnv):
     def _update_height_measurements(self):
         """Update measured heights from RayCaster sensor."""
         self.measured_heights = self._height_scanner.data.ray_hits_w[..., 2]
+
+    def _randomize_depth_camera_pose(self):
+        """Apply the legacy front-camera mount and pitch randomization once per environment."""
+        if self._depth_camera is None:
+            return
+
+        depth_cfg = self.cfg.depth_camera
+        positions = torch.tensor(depth_cfg.position, dtype=torch.float32, device=self.device).repeat(self.num_envs, 1)
+        base_rot = torch.tensor(depth_cfg.offset_rot, dtype=torch.float32, device=self.device).repeat(self.num_envs, 1)
+        pitch_deg = (
+            torch.rand(self.num_envs, device=self.device) * (depth_cfg.angle[1] - depth_cfg.angle[0]) + depth_cfg.angle[0]
+        )
+        pitch_quat = quat_from_euler_xyz(
+            torch.zeros_like(pitch_deg), torch.deg2rad(pitch_deg), torch.zeros_like(pitch_deg)
+        )
+        orientations = quat_mul(pitch_quat, base_rot)
+        self._depth_camera._view.set_local_poses(translations=positions, orientations=orientations)
+        self._depth_camera.reset()
+
+    def _process_depth_images(self, depth_images: torch.Tensor) -> torch.Tensor:
+        """Replicate the legacy crop, resize, clip, and normalize pipeline."""
+        depth_cfg = self.cfg.depth_camera
+        depth_images = depth_images.squeeze(-1)
+        depth_images = torch.nan_to_num(
+            depth_images, nan=depth_cfg.far_clip, posinf=depth_cfg.far_clip, neginf=depth_cfg.near_clip
+        )
+        depth_images = depth_images[:, :-2, 4:-4]
+        if depth_cfg.dis_noise > 0.0:
+            noise = depth_cfg.dis_noise * (2.0 * torch.rand(depth_images.shape[0], 1, 1, device=self.device) - 1.0)
+            depth_images = depth_images + noise
+        depth_images = torch.clamp(depth_images, depth_cfg.near_clip, depth_cfg.far_clip)
+        depth_images = F.interpolate(
+            depth_images.unsqueeze(1),
+            size=(depth_cfg.resized[1], depth_cfg.resized[0]),
+            mode="bilinear",
+            align_corners=False,
+        ).squeeze(1)
+        denom = max(depth_cfg.far_clip - depth_cfg.near_clip, 1.0e-6)
+        return (depth_images - depth_cfg.near_clip) / denom - 0.5
+
+    def _update_depth_buffer(self) -> bool:
+        """Capture and store depth frames on the legacy update interval."""
+        if self._depth_camera is None:
+            return False
+        if not torch.any(self.episode_length_buf > 0):
+            return False
+        if self.common_step_counter % self.cfg.depth_camera.update_interval != 0:
+            return False
+
+        depth_images = self._process_depth_images(self._depth_camera.data.output["depth"])
+        init_mask = self.episode_length_buf <= 1
+
+        if torch.any(init_mask):
+            repeated = depth_images[init_mask].unsqueeze(1).repeat(1, self.cfg.depth_camera.buffer_len, 1, 1)
+            self.depth_buffer[init_mask] = repeated
+        if torch.any(~init_mask):
+            self.depth_buffer[~init_mask] = torch.cat(
+                [self.depth_buffer[~init_mask, 1:], depth_images[~init_mask].unsqueeze(1)], dim=1
+            )
+        return True
 
     # ------------------------------------------------------------------
     # USDZ visual attachment

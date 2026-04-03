@@ -16,7 +16,7 @@ import isaaclab.terrains as terrain_gen
 from isaaclab.assets import ArticulationCfg
 from isaaclab.envs import DirectRLEnvCfg
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns
+from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, TiledCameraCfg, patterns
 from isaaclab.sim import PhysxCfg, SimulationCfg
 from isaaclab.terrains import TerrainImporterCfg
 from isaaclab.terrains.terrain_generator_cfg import TerrainGeneratorCfg
@@ -39,6 +39,11 @@ N_PRIV_LATENT = 41  # mass_params(4) + friction(1) + motor_p(18) + motor_d(18)
 HISTORY_LEN = 10
 
 NUM_OBSERVATIONS = N_PROPRIO + N_SCAN + N_PRIV + N_PRIV_LATENT + HISTORY_LEN * N_PROPRIO
+
+
+def _focal_length_from_horizontal_fov(horizontal_fov_deg: float, horizontal_aperture: float = 20.955) -> float:
+    """Convert horizontal FOV in degrees to USD focal length in cm."""
+    return horizontal_aperture / (2.0 * math.tan(math.radians(horizontal_fov_deg) / 2.0))
 
 
 # ---------------------------------------------------------------------------
@@ -154,11 +159,49 @@ class NoiseCfg:
     noise_scales: NoiseScalesCfg = NoiseScalesCfg()
 
 
+@configclass
+class DepthCameraCfg:
+    use_camera: bool = False
+    camera_num_envs: int = 100
+
+    position: tuple[float, float, float] = (0.27, 0.0, 0.03)
+    angle: tuple[float, float] = (-5.0, 5.0)
+    offset_rot: tuple[float, float, float, float] = (0.5, -0.5, 0.5, -0.5)
+
+    update_interval: int = 3
+    original: tuple[int, int] = (106, 60)
+    resized: tuple[int, int] = (50, 50)
+    horizontal_fov: float = 87.0
+    horizontal_aperture: float = 20.955
+    buffer_len: int = 2
+
+    near_clip: float = 0.0
+    far_clip: float = 2.0
+    dis_noise: float = 0.0
+
+    sensor: TiledCameraCfg = TiledCameraCfg(
+        prim_path="/World/envs/env_.*/Robot/base_link/front_depth_camera",
+        update_period=0.0,
+        offset=TiledCameraCfg.OffsetCfg(pos=position, rot=offset_rot, convention="ros"),
+        data_types=["depth"],
+        depth_clipping_behavior="max",
+        spawn=sim_utils.PinholeCameraCfg(
+            focal_length=_focal_length_from_horizontal_fov(horizontal_fov, horizontal_aperture),
+            focus_distance=400.0,
+            horizontal_aperture=horizontal_aperture,
+            clipping_range=(1.0e-3, far_clip),
+        ),
+        width=original[0],
+        height=original[1],
+    )
+
+
 EIGENBOT_ROUGH_TERRAIN_CFG = TerrainGeneratorCfg(
     size=(8.0, 8.0),
     border_width=20.0,
     num_rows=10,
     num_cols=20,
+    curriculum=True,
     horizontal_scale=0.1,
     vertical_scale=0.005,
     slope_threshold=0.75,
@@ -236,11 +279,12 @@ class EigenbotEnvCfg(DirectRLEnvCfg):
     # action scale: target angle = action_scale * action + default_joint_pos
     action_scale: float = 0.25
 
-    # terrain (defaults to flat plane; set terrain_type="generator" and
-    # terrain_generator=EIGENBOT_ROUGH_TERRAIN_CFG for rough terrain)
+    # terrain
     terrain: TerrainImporterCfg = TerrainImporterCfg(
         prim_path="/World/ground",
-        terrain_type="plane",
+        terrain_type="generator", # Alternatively, use "plane" here
+        terrain_generator=EIGENBOT_ROUGH_TERRAIN_CFG,
+        max_init_terrain_level=5,
         collision_group=-1,
         physics_material=sim_utils.RigidBodyMaterialCfg(
             friction_combine_mode="multiply",
@@ -268,3 +312,4 @@ class EigenbotEnvCfg(DirectRLEnvCfg):
     domain_rand: DomainRandCfg = DomainRandCfg()
     normalization: NormalizationCfg = NormalizationCfg()
     noise: NoiseCfg = NoiseCfg()
+    depth_camera: DepthCameraCfg = DepthCameraCfg()

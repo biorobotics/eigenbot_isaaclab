@@ -24,6 +24,7 @@ parser.add_argument(
 )
 parser.add_argument("--num_envs", type=int, default=None, help="Number of environments to simulate.")
 parser.add_argument("--task", type=str, default=None, help="Name of the task.")
+parser.add_argument("--use_camera", action="store_true", default=False, help="Enable the Eigenbot depth camera.")
 parser.add_argument(
     "--agent", type=str, default="rsl_rl_cfg_entry_point", help="Name of the RL agent configuration entry point."
 )
@@ -40,8 +41,8 @@ cli_args.add_rsl_rl_args(parser)
 AppLauncher.add_app_launcher_args(parser)
 # parse the arguments
 args_cli, hydra_args = parser.parse_known_args()
-# always enable cameras to record video
-if args_cli.video:
+# always enable cameras to record video / depth sensing
+if args_cli.video or args_cli.use_camera:
     args_cli.enable_cameras = True
 
 # clear out sys.argv for Hydra
@@ -90,6 +91,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # override configurations with non-hydra CLI arguments
     agent_cfg: RslRlBaseRunnerCfg = cli_args.update_rsl_rl_cfg(agent_cfg, args_cli)
     env_cfg.scene.num_envs = args_cli.num_envs if args_cli.num_envs is not None else env_cfg.scene.num_envs
+    if hasattr(env_cfg, "depth_camera"):
+        env_cfg.depth_camera.use_camera = args_cli.use_camera
+        if args_cli.use_camera and args_cli.num_envs is None:
+            env_cfg.scene.num_envs = min(env_cfg.scene.num_envs, env_cfg.depth_camera.camera_num_envs)
 
     # set the environment seed
     # note: certain randomizations occur in the environment initialization so we set the seed here

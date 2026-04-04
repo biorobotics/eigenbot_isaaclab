@@ -1,0 +1,41 @@
+<launch>
+  <arg
+    name="model" default="$(find titan6_description)/urdf/titan6.xacro"/>
+  <param 
+    name="robot_description" 
+    command="rosrun xacro xacro --inorder $(arg model)" />
+
+  <arg
+    name="gui"
+    default="True" />
+  <param
+    name="use_gui"
+    value="$(arg gui)" />
+  <node
+    name="joint_state_publisher"
+    pkg="joint_state_publisher"
+    type="joint_state_publisher" />
+<!--   <node
+    name="joint_state_publisher"
+    pkg="titan6_cpg"
+    type="drawShape.py" /> -->
+<!--   <node
+    name="joint_state_publisher"
+    pkg="titan6_cpg"
+    type="titan6_triangleCPG.py" /> -->
+  <node
+    name="robot_state_publisher"
+    pkg="robot_state_publisher"
+    type="state_publisher" />
+  <node
+    name="rviz"
+    pkg="rviz"
+    type="rviz"
+    args="-d $(find titan6_description)/rviz/urdf.rviz" />
+<!--   <node name="showPath1" pkg="titan6_cpg" type="showPath" args="leg1_Foot 1"/>
+  <node name="showPath2" pkg="titan6_cpg" type="showPath" args="leg2_Foot 2"/>
+  <node name="showPath3" pkg="titan6_cpg" type="showPath" args="leg3_Foot 3"/>
+  <node name="showPath4" pkg="titan6_cpg" type="showPath" args="leg4_Foot 4"/>
+  <node name="showPath5" pkg="titan6_cpg" type="showPath" args="leg5_Foot 5"/>
+  <node name="showPath6" pkg="titan6_cpg" type="showPath" args="leg6_Foot 6"/> -->
+</launch>

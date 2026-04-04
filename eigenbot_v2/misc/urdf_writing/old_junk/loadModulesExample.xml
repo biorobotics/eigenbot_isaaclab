@@ -1,0 +1,24 @@
+
+<!-- loading each xacro for each module to combine into a single urdf;
+First module is linked to the world, at identity -->
+
+<!-- the first module is always attached to the world -->
+<xacro:property name="world_parent_module" value="world" />
+<xacro:property name="world_mount_xyz" value="0 0 0" />
+<xacro:property name="world_mount_rpy" value="0 0 0" />
+
+<!-- the first module ID will be loaded -->
+<xacro:property name="child_module_1" value="Module_Type_1" /> ## Write this with script ##
+
+<!-- include first module in urdf mounted to world-->
+<xacro:include filename="${child_module_2}.urdf.xacro" 
+	parent_module=${world_parent_module} mount_xyz=${world_mount_xyz} mount_rpy=${world_mount_rpy}/>
+		
+<!-- Second module is linked to the first, at its output-->
+<xacro:property name="child_module_2" value="Module_Type_2" /> ## Write this with script from module fbk##
+<xacro:property name="parent_module_1" value="${child_module_1}" /> 
+<xacro:property name="port_mount_xyz_1 = "0 0 0.05"/> ## Write this with script from module fbk## 
+<xacro:property name="port_mount_rpy_1 = "0 0 0"/> ## Write this with script from module fbk##
+
+<xacro:include filename="${child_module_2}.urdf.xacro" 
+	parent_module=${parent_module_1} mount_xyz=${port_mount_xyz_1} mount_rpy=${port_mount_rpy_1}/>

@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name = "cube_mod">
+
+  <xacro:property name="M_PI" value="3.1415926535897931" />
+  <xacro:macro name="eigenbody" params="module_label">
+  
+      <link name="eigenbody_${module_label}">
+      
+      <inertial>
+        <mass value="0.84845"/>
+            <origin
+            xyz="-0.045 0 -0.063"
+            rpy="0 0 0" />
+        <inertia ixx=".005031284" ixy="0.000000338" ixz="0.000086805" iyy="0.003968526" iyz="0.000039596" izz="0.001646162"/>
+      </inertial>
+
+        <visual>
+          <geometry>
+            <mesh filename="package://eigenbot/meshes/Eigenbody.STL" scale="1 1 1"/>
+          </geometry>
+        </visual>  
+        
+        <collision>
+          <geometry>
+            <mesh filename="package://eigenbot/meshes/Eigenbody.STL" scale="1 1 1"/>
+          </geometry>
+        </collision>
+        
+      <material name="black">
+        <color rgba="0.1 0.1 0.1 1"/>
+      </material>
+
+      </link>
+    </xacro:macro>
+</robot>

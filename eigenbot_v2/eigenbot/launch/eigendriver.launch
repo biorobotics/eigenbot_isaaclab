@@ -1,0 +1,5 @@
+<!-- ROS Demo EigenBot **TURN ON ROBOT FIRST** -->
+<launch>
+    <include file="$(find eigenbot_driver)/launch/eigen_driver.launch"/>
+    <!--<node name="eigenbot_assembly" pkg="eigenbot" type="description_listener.py" output="screen"/>-->
+</launch>

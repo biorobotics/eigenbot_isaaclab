@@ -1,0 +1,22 @@
+<!-- The SRDF or Semantic Robot Description Format complement the URDF and specifies joint groups, default robot configurations, additional collision checking information, and additional transforms that may be needed to completely specify the robot’s pose. -->
+ <!-- This does not replace URDF, and is not an extension of URDF.
+      This is a format for representing semantic information about the robot structure.
+      A URDF file must exist for this robot as well, where the joints and the links that are referenced are defined -->
+
+<?xml version="1.0"?> 
+<robot name="modular_robot"> 
+<group name="modular_arm"> 
+
+<!-- when a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group -->
+<chain base_link=" bendy_input_M0" tip_link=" bendy_output_M4"/> 
+</group> 
+
+   <!-- define end effectors -->
+<end_effector name="robot_end_effector" parent_link=" bendy_output_M4" group=" modular_arm"/>
+
+   <!-- By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. There can be many such tags in this file.-->
+<disable_collisions link1="bendy_output_M0" link2="bendy_input_M1" reason="fixed attachment"/>   <disable_collisions link1="bendy_output_M1" link2="bendy_input_M2" reason="fixed attachment"/>   <disable_collisions link1="bendy_output_M2" link2="bendy_input_M3" reason="fixed attachment"/>
+<disable_collisions link1="bendy_output_M3" link2="bendy_input_M4" reason="fixed attachment"/>
+
+ 
+</robot>

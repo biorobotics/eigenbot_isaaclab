@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<xacro:macro name="wheel_module" params="module_label">
+  
+  <link name="wheel_input_${module_label}">
+      <inertial>
+          <origin
+            xyz="-0.03217 -0.01684  0.00008"
+            rpy="0 0 0" />
+          <mass
+            value="0.16899" />
+          <inertia
+            ixx="0.00011469"
+            ixy="0.00005233"
+            ixz="0.0000004"
+            iyy="0.00011843"
+            iyz="0.00000024"
+            izz="0.00017019" />
+        </inertial>
+      
+        <visual>
+            <geometry>
+                     <mesh
+                filename="package://eigenbot/meshes/Wheel In.STL" scale=" 1 1 1 "/>          
+          </geometry>
+
+        </visual>  
+        
+        <collision>
+            <geometry>
+             <mesh
+                filename="package://eigenbot/meshes/Wheel In.STL" scale=" 1 1 1 "/>          
+           </geometry>
+        </collision>
+    <material name="black">
+      <color rgba="0.1 0.1 0.1 1"/>
+    </material>
+  </link>
+      
+
+
+  <link name="wheel_output_${module_label}">
+      
+      <inertial>
+          <origin
+            xyz="-0.03 0 0"
+            rpy="0 0 0" />
+          <mass
+            value="0.30808" />
+          <inertia
+            ixx=".00103"
+            ixy="0"
+            ixz="0"
+            iyy="0.00054"
+            iyz="0"
+            izz="0.00054" />
+        </inertial>
+      
+        <visual>
+          <geometry>
+            <mesh
+                filename="package://eigenbot/meshes/Wheel Out.STL" scale=" 1 1 1 "/>          
+       </geometry>
+
+              <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        </visual>  
+
+
+        <collision>
+          <geometry>
+            <mesh
+                filename="package://eigenbot/meshes/Wheel Out.STL" scale=" 1 1 1 "/>          
+          </geometry>
+        </collision>
+        
+    <material name="black">
+      <color rgba="0.1 0.1 0.1 1"/>
+    </material>
+  </link>
+      
+      
+      
+      
+  <joint name="wheel_joint_${module_label}" type="continuous">
+    <parent link="wheel_input_${module_label}"/>
+    <child link="wheel_output_${module_label}"/>
+    <origin xyz="-0.06858 -0.044775 0" 
+            rpy="0 0 0" />
+    <axis xyz="1 0 0"/> 
+    <limit effort="100.0" velocity="3.2"/>
+  </joint>
+      
+      
+    </xacro:macro>
+</robot>

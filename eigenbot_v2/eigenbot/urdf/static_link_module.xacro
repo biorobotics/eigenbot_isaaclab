@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<xacro:macro name="static_link_module" params="module_label">
+  
+    <link name="static_link_${module_label}">
+      <inertial> <!-- TODO: check this is the right offset from CAD -->
+          <origin
+            xyz="0 0 0.025" 
+            rpy="0 0 0" />
+          <mass
+            value=".1" />
+          <inertia
+            ixx=".0001"
+            ixy="0"
+            ixz="0"
+            iyy=".0001"
+            iyz="0"
+            izz=".0001" />
+        </inertial>
+      
+        <visual>
+
+	<origin  
+	xyz="0 0 0.025" 
+        rpy="0 0 0" /><!-- TODO:remove/fix when real CAD is available -->
+
+          <geometry>
+
+            <cylinder length="0.05" radius="0.028575"/>
+			 <!-- <mesh
+          filename="package://eigenbot/meshes/static_link_module.stl" scale="0.001 0.001 0.001" 
+		/>    -->   
+ 	</geometry>
+        </visual>  
+        
+        <collision>
+
+	<origin  
+	xyz="0 0 0.025" 
+        rpy="0 0 0" /><!-- TODO:remove/fix when real CAD is available -->
+
+          <geometry>
+            <cylinder length="0.05" radius="0.028575"/>
+			<!--<mesh
+          filename="package://eigenbot/meshes/static_link_module.stl" scale="0.001 0.001 0.001" 
+	/>         -->       
+	</geometry>
+        </collision>
+        
+        <material
+            name="">
+            <color
+              rgba="0.9 0.9 0.9 1" />
+         </material>  
+      </link>
+	  
+
+	  
+
+	  
+    </xacro:macro>
+</robot>
+
+
+

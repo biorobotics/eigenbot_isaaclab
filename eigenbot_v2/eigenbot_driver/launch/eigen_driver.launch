@@ -1,0 +1,16 @@
+<launch>
+
+<node pkg="eigenbot_driver" type="eigen_serial.py" name="eigen_serial" output="screen">
+ <param name="port" value="/dev/ttyACM0" />
+</node>
+
+<node pkg="eigenbot_driver" type="eigen_joint_control.py" name="eigen_joint" output="screen">
+ <param name="rate" value="10" />
+</node>
+
+<node pkg="eigenbot_driver" type="eigen_topology.py" name="eigen_topology" output="screen">
+ <param name="query_rate" value="5" />
+ <param name="expiration" value="5" />
+</node>
+
+</launch>

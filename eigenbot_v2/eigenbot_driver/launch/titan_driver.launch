@@ -1,0 +1,19 @@
+<launch>
+
+<node pkg="eigenbot_driver" type="eigen_serial.py" name="eigenbus" output="screen">
+ <param name="port" value="/dev/serial/by-id/usb-Cypress_Semiconductor_USBUART_3800020B100E3484-if00" />
+</node>
+
+<node pkg="eigenbot_driver" type="eigen_joint_control.py" name="titan_joint" output="screen">
+ <param name="rate" value="10" />
+ <remap from="eigenbot/joint_cmd" to="titan/joint/cmd" />
+ <remap from="eigenbot/joint_fb" to="titan/joint/fb" />
+</node>
+
+<node pkg="eigenbot_driver" type="eigen_topology.py" name="eigen_topology">
+ <param name="query_rate" value="3" />
+ <param name="expiration" value="5" />
+ <remap from="eigenbot/topology" to="titan/topology" />
+</node>
+
+</launch>

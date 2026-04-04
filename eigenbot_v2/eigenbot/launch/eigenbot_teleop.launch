@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find eigenbot_driver)/launch/eigen_driver.launch"/>
+    <node name="joy_node" pkg="joy" type="joy_node"  output="screen" />
+    <node name="eigenbot_joy_interface" pkg="eigenbot" type="eigenbot_joy_interface.py" output="screen"/>
+    <node name="eigenbot_joint_controller" pkg="eigenbot" type="eigenbot_joint_controller.py" output="screen"/>
+</launch>

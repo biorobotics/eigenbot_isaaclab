@@ -1,0 +1,4 @@
+controller_list:
+  - name: fake_modular_arm_controller
+    joints:
+      - bendy_joint_S6M1

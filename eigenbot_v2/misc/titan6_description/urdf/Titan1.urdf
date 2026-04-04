@@ -1,0 +1,268 @@
+<robot
+  name="Titan1">
+
+
+  <link
+    name="base_link">
+    <inertial>
+      <origin
+        xyz="0 -2.7756E-17 0.0047625"
+        rpy="0 0 0" />
+      <mass
+        value="1.7453" />
+      <inertia
+        ixx="0"
+        ixy="0"
+        ixz="0"
+        iyy="0"
+        iyz="0"
+        izz="0" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Titan1/meshes/base_link.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89804 0.91765 0.92941 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Titan1/meshes/base_link.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+
+  <link
+    name="Link1">
+    <inertial>
+      <origin
+        xyz="-0.013312 -0.0013264 -0.0010606"
+        rpy="0 0 0" />
+      <mass
+        value="0.22519" />
+      <inertia
+        ixx="2.6809E-05"
+        ixy="-4.7744E-06"
+        ixz="-5.8893E-07"
+        iyy="4.787E-05"
+        iyz="-2.9537E-07"
+        izz="2.3674E-05" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Titan1/meshes/Link1.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Titan1/meshes/Link1.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L1_0"
+    type="fixed">
+    <origin
+      xyz="0.087988 0.1524 0.032525"
+      rpy="0 0 1.0472" />
+    <parent
+      link="base_link" />
+    <child
+      link="Link1" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+
+
+  <link
+    name="Link1_2">
+    <inertial>
+      <origin
+        xyz="-4.8561E-11 -2.5789E-11 0.048171"
+        rpy="1.5708 0 0" />
+      <mass
+        value="0.81692" />
+      <inertia
+        ixx="0.00032277"
+        ixy="-2.6344E-05"
+        ixz="1.4129E-12"
+        iyy="0.0012074"
+        iyz="2.0476E-13"
+        izz="0.00089145" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="1.5708 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Titan1/meshes/Link1_2.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="1.5708 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Titan1/meshes/Link1_2.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L1_1"
+    type="continuous">
+    <origin
+      xyz="0 0 0.02205"
+      rpy="0 0 -1.5708" />
+    <parent
+      link="Link1" />
+    <child
+      link="Link1_2" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+
+
+  <link
+    name="Link1_3">
+    <inertial>
+      <origin
+        xyz="0.00043046 0.6759 0.056602"
+        rpy="0 0 0" />
+      <mass
+        value="0.69389" />
+      <inertia
+        ixx="0.075628"
+        ixy="-9.5674E-05"
+        ixz="-7.8851E-06"
+        iyy="0.0003032"
+        iyz="-0.0034479"
+        izz="0.075328" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 -1.5708 -3.1416" />
+      <geometry>
+        <mesh
+          filename="package://Titan1/meshes/Link1_3.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.25098 0.25098 0.25098 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Titan1/meshes/Link1_3.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L1_2"
+    type="continuous">
+    <origin
+      xyz="0 0 0.0514"
+      rpy="0 1.5708 0" />
+    <parent
+      link="Link1_2" />
+    <child
+      link="Link1_3" />
+    <axis
+      xyz="0 0 1" />
+  </joint>
+
+
+  <link
+    name="Link1_4">
+    <inertial>
+      <origin
+        xyz="3.6557E-09 -0.44069 0.041072"
+        rpy="0 0 0" />
+      <mass
+        value="0.37265" />
+      <inertia
+        ixx="0.011347"
+        ixy="-7.8824E-10"
+        ixz="-6.7911E-12"
+        iyy="8.2055E-06"
+        iyz="0.00015683"
+        izz="0.011339" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="1.5708 0 1.5708" />
+      <geometry>
+        <mesh
+          filename="package://Titan1/meshes/Link1_4.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.89804 0.91765 0.92941 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="package://Titan1/meshes/Link1_4.STL" />
+      </geometry>
+    </collision>
+  </link>
+  <joint
+    name="L1_3"
+    type="continuous">
+    <origin
+      xyz="0 1.0255 0.08505"
+      rpy="0 0 1.5708" />
+    <parent
+      link="Link1_3" />
+    <child
+      link="Link1_4" />
+    <axis
+      xyz="0 0 1" />
+    <limit
+      effort="0"
+      velocity="0" />
+  </joint>
+</robot>

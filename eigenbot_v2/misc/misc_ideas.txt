@@ -1,0 +1,42 @@
+
+Julian Whitman <jwhitman@cmu.edu>
+Attachments
+Tue, Mar 26, 11:04 AM 
+to Charles
+
+I am dreaming up a way of specifying modular robot urdf's. I want it to be flexible enough that we can include arbitrary robots as "modules" without reinventing the wheel. I've seen a few different ways that past literature handles module descriptions, and a key feature is the idea of ports: places where modules connect that are pre-defined.
+
+So far I am thinking of making something like this as a wrapper that converts a typical robot urdf into a module xacro (see attached moduleExample.xml). I don't expect this to work as-is but hopefully it conveys some idea.
+
+For a reference about how to use nested complex xacros I have been looking at the shadow hand but if you know a different one that is a better example to look at I would love to look at it.
+
+I am thinking each module would have its own file like moduleExample, and then a central processor (control computer) would gather them and combine them all based on which ports and mounts are active, something like this:
+
+<!-- loading each xacro for each module to combine into a single urdf;
+First module is linked to the world, at identity -->
+	<xacro:property name="parent_module" value="world" />
+	<xacro:property name="mount_xyz" value="0 0 0" />
+	<xacro:property name="mount_rpy" value="0 0 0" />
+	<xacro:include filename="Module_Type_1.urdf.xacro" 
+		parent_module=${parent_module} mount_xyz=${mount_xyz} mount_rpy=${mount_rpy}/>
+
+Where we specify each module's parent and mount, which would be converted to the origin frame of the that module.
+
+Do you have any idea on how to turn this dream into reality? I'm stuck on what to do next with it.
+
+
+Charles Hart
+Tue, Mar 26, 5:42 PM
+to Julian
+
+Thanks for writing, this is very interesting. Arbitrary configurations of links are not uncommon, so what is different here? Just that they are updated on the fly, or what? When the hardware configuration changes, the visualization and collision models should update to match. How ambitious do you feel this is, and what literature have you found or searched for but missed that supports your feeling?
+
+I can imagine this being really cool not just because you could take parts off and they would disappear, but if you have wireless communication and truly self contained modules you might be able to see where the robot leg fell off in the field, see which ports are open to accept more legs, which parts are on the rack ready to go etc. Not in scope, but it would be cool. Throw it in the future work section.
+
+The proposed eigenbot modules include radial and axial rotary motion modules, a wheel and a gripper module, and a number of passive modules. I would like to add a button or touch sensor and a simple display or LED module to that list as well. Since we know that urdf descriptions for each module are required, it seems like an easy step in the right direction is to model two or three of these modules as pairs of cylinders. This will give us the building blocks to play with, and a way to test if our ideas about how this could all work.
+
+What you describe in particular is not something I have seen, but I would imagine that it's possible. The shadow hand is a good example. While you could have a shadow hand with 3 or 5 fingers, you have to launch a different file to deal with the different hardware configuration. How important is the real-time relationship? Does it make sense to do this in two or more phases -- to start it's okay if there is some user interaction required to run a script or press a button on the robot? Once it works to press a button on the robot, the next level of automation is within immediate grasp, where updates happen in real time.
+
+If my understanding of the eigenbot inter module communication is correct, the absence or presence (and type) of a module can be detected by the next module closer to the root. Your concept of the port tag is good, and feasible as a place for scripted expansion/replacement/string editing to occur. Every module should be able to send an updated urdf for the tree of modules below it to the next module above it. It's easier to think of as a tree; loops in the tree should not be impossible to deal with, its just that choosing a root is a silly thing to waste time on IMO. I'm imagining the root module is connected by USB to a big PC, so let me know if that's not part of the plan. A possible first step in this direction would be to stream a tree of module IDs to ROS. Next we could try things like either send the full configuration or have a node accept the ID tree to generate the full configuration.
+
+So in summary, my approach would be to investigate the use of a ros service to replace the old xacro with a new one every time the hardware configuration changes. What do you think about building the xacro recursively in hardware and providing either a service to get the configuration serially or allow access directly as a file? 

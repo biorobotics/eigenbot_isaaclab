@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<!--This does not replace URDF, and is not an extension of URDF.
+    This is a format for representing semantic information about the robot structure.
+    A URDF file must exist for this robot as well, where the joints and the links that are referenced are defined-->
+<robot name="modular_robot_compiled">
+  <group name="modular_arm">
+        <chain base_link="fix_base" tip_link="static_elbow_S2M3" />
+    </group>
+<!--END EFFECTOR: Purpose: Represent information about an end effector.-->
+    <end_effector name="arm_end_effector" parent_link="static_elbow_S2M3" group="modular_arm" />
+    <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)--> 
+    <virtual_joint name="virtual_fix_base_joint" type="fixed" parent_frame="virtual_fix_base_frame" child_link="fix_base" /> 
+    <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
+<disable_collisions link1="fix_base" link2="static_base_S0M0" reason="Joint connection"/>
+<disable_collisions link1="bendy_input_S6M1" link2="bendy_output_S6M1" reason="Joint connection"/>
+<disable_collisions link1="static_base_S0M0" link2="bendy_input_S6M1" reason="Joint connection"/>
+<disable_collisions link1="bendy_output_S6M1" link2="static_elbow_S3M2" reason="Joint connection"/>
+<disable_collisions link1="static_elbow_S3M2" link2="static_elbow_S2M3" reason="Joint connection"/>
+</robot>

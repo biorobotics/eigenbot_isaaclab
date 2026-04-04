@@ -1,0 +1,17 @@
+when I run the moveit setup assistant on the auto urdf, the following files have the urdf-dependent files get generated, all of which are inside eigenbot_moveit_config/config
+
+modular_robot_compiled.srdf -> certainly needed
+fake_controllers.yaml -> can't tell if this is necessary, but since it requires breaking into the module individual urdfs to grab their moving joint names.
+joint_limits.yaml -> appears to be uneccesary since it says "joint_limits.yaml allows the dynamics properties specified in the URDF to be overwritten or augmented as needed"
+ros_controllers.yaml -> probably needed to publish the joint states for use as commands to hardware. But it requires breaking open the joint names in the module urdfs.
+
+It is unclear to me which of these files are critical. I am sure the srdf is critical but we may be able to live without the others.
+
+One workaround might be to write the xacro, then call a system call of 
+rosrun xacro xacro --inorder -o autoXACRO.urdf autoXACRO.xacro
+then open and read the autoXACRO.urdf into an xml tree and take out all the names of the joints from there.
+
+To do: when there are multiple branches (e.g. not just a serial chain) to the kinematic tree, will need to redo the section that creates planning groups in the modular_robot_compiled.srdf.
+
+
+

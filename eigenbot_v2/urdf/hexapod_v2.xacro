@@ -1,0 +1,418 @@
+<?xml version="1.0"?> 
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="modular_robot_compiled">  
+
+<xacro:property name="M_PI" value="3.1415926535897931" /> 
+<!--Include files for, then joint to attach, module type Eigenbody-->
+<xacro:include filename="../urdf/eigenbody.xacro"/>
+<xacro:eigenbody module_label="M0_S0"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M1_S1"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M2_S2"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M3_S3"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M4_S4"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M5_S5"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M6_S6"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M7_S7"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M8_S8"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M9_S9"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M10_S10"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M11_S11"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M12_S12"/>
+
+<!--Include files for, then joint to attach, module type Static_90deg_module-->
+<xacro:include filename="../urdf/static_90deg_module.xacro"/>
+<xacro:static_90deg_module module_label="M19_S19"/>
+
+<!--Include files for, then joint to attach, module type Static_90deg_module-->
+<xacro:include filename="../urdf/static_90deg_module.xacro"/>
+<xacro:static_90deg_module module_label="M20_S20"/>
+
+<!--Include files for, then joint to attach, module type Static_90deg_module-->
+<xacro:include filename="../urdf/static_90deg_module.xacro"/>
+<xacro:static_90deg_module module_label="M21_S21"/>
+
+<!--Include files for, then joint to attach, module type Static_90deg_module-->
+<xacro:include filename="../urdf/static_90deg_module.xacro"/>
+<xacro:static_90deg_module module_label="M22_S22"/>
+
+<!--Include files for, then joint to attach, module type Static_90deg_module-->
+<xacro:include filename="../urdf/static_90deg_module.xacro"/>
+<xacro:static_90deg_module module_label="M23_S23"/>
+
+<!--Include files for, then joint to attach, module type Static_90deg_module-->
+<xacro:include filename="../urdf/static_90deg_module.xacro"/>
+<xacro:static_90deg_module module_label="M24_S24"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M13_S13"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M14_S14"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M15_S15"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M16_S16"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M17_S17"/>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="../urdf/bendy_module.xacro"/>
+<xacro:bendy_module module_label="M18_S18"/>
+
+<!--Include files for, then joint to attach, module type Foot_module-->
+<xacro:include filename="../urdf/foot_module.xacro"/>
+<xacro:foot_module module_label="M25_S25"/>
+
+<!--Include files for, then joint to attach, module type Foot_module-->
+<xacro:include filename="../urdf/foot_module.xacro"/>
+<xacro:foot_module module_label="M26_S26"/>
+
+<!--Include files for, then joint to attach, module type Foot_module-->
+<xacro:include filename="../urdf/foot_module.xacro"/>
+<xacro:foot_module module_label="M27_S27"/>
+
+<!--Include files for, then joint to attach, module type Foot_module-->
+<xacro:include filename="../urdf/foot_module.xacro"/>
+<xacro:foot_module module_label="M28_S28"/>
+
+<!--Include files for, then joint to attach, module type Foot_module-->
+<xacro:include filename="../urdf/foot_module.xacro"/>
+<xacro:foot_module module_label="M29_S29"/>
+
+<!--Include files for, then joint to attach, module type Foot_module-->
+<xacro:include filename="../urdf/foot_module.xacro"/>
+<xacro:foot_module module_label="M30_S30"/>
+
+<joint name="connection_0_attachment" type="fixed">
+<origin
+xyz="-0.041 0.067 -0.13"
+rpy="0 0 ${-M_PI/2}"
+/>
+<parent link="eigenbody_M0_S0"/>
+<child link="bendy_input_M1_S1"/>
+</joint>
+
+<joint name="connection_1_attachment" type="fixed">
+<origin
+xyz="-0.041 0.067 -0.04"
+rpy="0 0 ${-M_PI/2}"
+/>
+<parent link="eigenbody_M0_S0"/>
+<child link="bendy_input_M2_S2"/>
+</joint>
+
+<joint name="connection_2_attachment" type="fixed">
+<origin
+xyz="-0.041 0.067 0.05"
+rpy="0 0 ${-M_PI/2}"
+/>
+<parent link="eigenbody_M0_S0"/>
+<child link="bendy_input_M3_S3"/>
+</joint>
+
+<joint name="connection_3_attachment" type="fixed">
+<origin
+xyz="-0.041 -0.067 -0.13"
+rpy="0 0 ${M_PI/2}"
+/>
+<parent link="eigenbody_M0_S0"/>
+<child link="bendy_input_M4_S4"/>
+</joint>
+
+<joint name="connection_4_attachment" type="fixed">
+<origin
+xyz="-0.041 -0.067 -0.04"
+rpy="0 0 ${M_PI/2}"
+/>
+<parent link="eigenbody_M0_S0"/>
+<child link="bendy_input_M5_S5"/>
+</joint>
+
+<joint name="connection_5_attachment" type="fixed">
+<origin
+xyz="-0.041 -0.067 0.05"
+rpy="0 0 ${M_PI/2}"
+/>
+<parent link="eigenbody_M0_S0"/>
+<child link="bendy_input_M6_S6"/>
+</joint>
+
+<joint name="connection_6_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${6*M_PI/4} 0 0"
+/>
+<parent link="bendy_output_M1_S1"/>
+<child link="bendy_input_M7_S7"/>
+</joint>
+
+<joint name="connection_7_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${6*M_PI/4} 0 0"
+/>
+<parent link="bendy_output_M2_S2"/>
+<child link="bendy_input_M8_S8"/>
+</joint>
+
+<joint name="connection_8_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${6*M_PI/4} 0 0"
+/>
+<parent link="bendy_output_M3_S3"/>
+<child link="bendy_input_M9_S9"/>
+</joint>
+
+<joint name="connection_9_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${2*M_PI/4} 0 0"
+/>
+<parent link="bendy_output_M4_S4"/>
+<child link="bendy_input_M10_S10"/>
+</joint>
+
+<joint name="connection_10_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${2*M_PI/4} 0 0"
+/>
+<parent link="bendy_output_M5_S5"/>
+<child link="bendy_input_M11_S11"/>
+</joint>
+
+<joint name="connection_11_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${2*M_PI/4} 0 0"
+/>
+<parent link="bendy_output_M6_S6"/>
+<child link="bendy_input_M12_S12"/>
+</joint>
+
+<joint name="connection_12_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${M_PI/2} 0 0"
+/>
+<parent link="bendy_output_M7_S7"/>
+<!-- <child link="bendy_input_M13_S13"/> -->
+<child link="static_elbow_M19_S19"/>
+</joint>
+
+<joint name="connection_13_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${M_PI/2} 0 0"
+/>
+<parent link="bendy_output_M8_S8"/>
+<!-- <child link="bendy_input_M14_S14"/> -->
+<child link="static_elbow_M20_S20"/>
+</joint>
+
+<joint name="connection_14_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${M_PI/2} 0 0"
+/>
+<parent link="bendy_output_M9_S9"/>
+<!-- <child link="bendy_input_M15_S15"/> -->
+<child link="static_elbow_M21_S21"/>
+</joint>
+
+<joint name="connection_15_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${M_PI/2} 0 0"
+/>
+<parent link="bendy_output_M10_S10"/>
+<!-- <child link="bendy_input_M16_S16"/> -->
+<child link="static_elbow_M22_S22"/>
+</joint>
+
+<joint name="connection_16_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${M_PI/2} 0 0"
+/>
+<parent link="bendy_output_M11_S11"/>
+<!-- <child link="bendy_input_M17_S17"/> -->
+<child link="static_elbow_M23_S23"/>
+</joint>
+
+<joint name="connection_17_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="${M_PI/2} 0 0"
+/>
+<parent link="bendy_output_M12_S12"/>
+<!-- <child link="bendy_input_M18_S18"/> -->
+<child link="static_elbow_M24_S24"/>
+</joint>
+
+<joint name="connection_18_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="0 0 0"
+/>
+<parent link="bendy_output_M13_S13"/>
+<!-- <child link="static_elbow_M19_S19"/> -->
+<child link="foot_input_M25_S25"/>
+</joint>
+
+<joint name="connection_19_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="0 0 0"
+/>
+<parent link="bendy_output_M14_S14"/>
+<!-- <child link="static_elbow_M20_S20"/> -->
+<child link="foot_input_M26_S26"/>
+</joint>
+
+<joint name="connection_20_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="0 0 0"
+/>
+<parent link="bendy_output_M15_S15"/>
+<!-- <child link="static_elbow_M21_S21"/> -->
+<child link="foot_input_M27_S27"/>
+</joint>
+
+<joint name="connection_21_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="0 0 0"
+/>
+<parent link="bendy_output_M16_S16"/>
+<!-- <child link="static_elbow_M22_S22"/> -->
+<child link="foot_input_M28_S28"/>
+</joint>
+
+<joint name="connection_22_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="0 0 0"
+/>
+<parent link="bendy_output_M17_S17"/>
+<!-- <child link="static_elbow_M23_S23"/> -->
+<child link="foot_input_M29_S29"/>
+</joint>
+
+<joint name="connection_23_attachment" type="fixed">
+<origin
+xyz="-0.036 0 0"
+rpy="0 0 0"
+/>
+<parent link="bendy_output_M18_S18"/>
+<!-- <child link="static_elbow_M24_S24"/> -->
+<child link="foot_input_M30_S30"/>
+</joint>
+
+<!-- TODO check roll if it should be negative or not -->
+<joint name="connection_24_attachment" type="fixed">
+<origin
+xyz="-0.0455 -0.0375 0"
+rpy="${M_PI/2} 0 ${M_PI/2}" 
+/>
+<parent link="static_elbow_M19_S19"/>
+<!-- <child link="foot_input_M25_S25"/> -->
+<child link="bendy_input_M13_S13"/>
+</joint>
+
+<joint name="connection_25_attachment" type="fixed">
+<origin
+xyz="-0.0455 -0.0375 0"
+rpy="${M_PI/2} 0 ${M_PI/2}" 
+/>
+<parent link="static_elbow_M20_S20"/>
+<!-- <child link="foot_input_M26_S26"/> -->
+<child link="bendy_input_M14_S14"/>
+</joint>
+
+<joint name="connection_26_attachment" type="fixed">
+<origin
+xyz="-0.0455 -0.0375 0"
+rpy="${M_PI/2} 0 ${M_PI/2}" 
+/>
+<parent link="static_elbow_M21_S21"/>
+<!-- <child link="foot_input_M27_S27"/> -->
+<child link="bendy_input_M15_S15"/>
+</joint>
+
+<joint name="connection_27_attachment" type="fixed">
+<origin
+xyz="-0.0455 -0.0375 0"
+rpy="${M_PI/2} 0 ${M_PI/2}" 
+/>
+<parent link="static_elbow_M22_S22"/>
+<!-- <child link="foot_input_M28_S28"/> -->
+<child link="bendy_input_M16_S16"/>
+</joint>
+
+<joint name="connection_28_attachment" type="fixed">
+<origin
+xyz="-0.0455 -0.0375 0"
+rpy="${M_PI/2} 0 ${M_PI/2}" 
+/>
+<parent link="static_elbow_M23_S23"/>
+<!-- <child link="foot_input_M29_S29"/> -->
+<child link="bendy_input_M17_S17"/>
+</joint>
+
+<joint name="connection_29_attachment" type="fixed">
+<origin
+xyz="-0.0455 -0.0375 0"
+rpy="${M_PI/2} 0 ${M_PI/2}" 
+/>
+<parent link="static_elbow_M24_S24"/>
+<!-- <child link="foot_input_M30_S30"/> -->
+<child link="bendy_input_M18_S18"/>
+</joint>
+
+</robot>

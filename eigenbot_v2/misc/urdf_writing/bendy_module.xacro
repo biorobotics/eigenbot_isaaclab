@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<xacro:macro name="bendy_module" params="module_label">
+  
+    <link name="bendy_input_${module_label}">
+      <inertial>
+          <origin
+            xyz="0.03 0 0"
+            rpy="0 0 0" />
+          <mass
+            value=".3" />
+          <inertia
+            ixx=".0001"
+            ixy="0"
+            ixz="0"
+            iyy=".0001"
+            iyz="0"
+            izz=".0001" />
+        </inertial>
+      
+        <visual>
+          <geometry>
+			<mesh
+          filename="Rotary_Module1.STL" />          </geometry>
+        </visual>  
+        
+        <collision>
+          <geometry>
+			<mesh
+          filename="Rotary_Module1.STL" />              </geometry>
+        </collision>
+        
+        <material
+            name="">
+            <color
+              rgba="0.9 0.9 0.9 1" />
+         </material>  
+      </link>
+	  
+	   <link name="bendy_output_${module_label}">
+      
+      <inertial>
+          <origin
+            xyz="0.0075 0 0"
+            rpy="0 0 0" />
+          <mass
+            value=".110" />
+          <inertia
+            ixx=".00001"
+            ixy="0"
+            ixz="0"
+            iyy=".00001"
+            iyz="0"
+            izz=".00001" />
+        </inertial>
+      
+        <visual>
+          <geometry>
+			<mesh
+          filename="Rotary_Module2.STL" />          </geometry>
+        </visual>  
+        
+        <collision>
+          <geometry>
+			<mesh
+          filename="Rotary_Module2.STL" />              </geometry>
+        </collision>
+        
+        <material
+            name="">
+            <color
+              rgba="0.9 0.9 0.9 1" />
+         </material>  
+      </link>
+	  
+	  
+	  
+	  
+  <joint name="bendy_joint_${module_label}" type="continuous">
+    <parent link="bendy_input_${module_label}"/>
+    <child link="bendy_output_${module_label}"/>
+    <origin xyz="0.0383 0 0" rpy="0 0 0" />
+  </joint>
+	  
+	  
+    </xacro:macro>
+</robot>

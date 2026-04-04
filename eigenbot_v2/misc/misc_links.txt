@@ -1,0 +1,22 @@
+
+
+
+Biorobotics urdfs:
+https://github.com/biorobotics/snake_ws/blob/master/src/snake_monster/urdf/rotary_module.xacro
+https://github.com/biorobotics/snake_ws/blob/master/src/snake_monster/urdf/hebi_arm.xacro
+https://github.com/biorobotics/snake_ws/blob/master/src/snake_monster/urdf/extension_module.xacro
+
+Shadow hand as example of nested xacros:
+https://ni.www.techfak.uni-bielefeld.de/files/URDF-XACRO.pdf
+
+Some package in ros for parsing urdfs. Might not provide much fuctions we need over the default xml package, though.
+https://github.com/ros/urdf_parser_py/
+
+Can test urdf in matlab but only after converting to urdf
+https://www.mathworks.com/matlabcentral/answers/422381-how-do-i-import-xacro-files-as-rigid-body-trees-in-robotics-system-toolbox
+
+ROS tutorial on xacro:
+http://wiki.ros.org/urdf/Tutorials/Using%20Xacro%20to%20Clean%20Up%20a%20URDF%20File
+
+Useful xacro example from our groups titan 6
+https://github.com/biorobotics/Titan-6-ROS/blob/hebicpp/titan6_description/urdf/titan6.xacro

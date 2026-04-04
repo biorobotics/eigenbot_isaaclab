@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<robot name="simple_cylinder">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <cylinder length="0.05" radius="0.02"/>
+      </geometry>
+    </visual>
+  </link>
+</robot>

@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<xacro:macro name="gripper_module" params="module_label">
+  
+    <link name="gripper_${module_label}">
+      <inertial> <!-- TODO: check this is the right offset from CAD -->
+          <origin
+            xyz="-0.0381  -0.0015  -0.0037" 
+            rpy="0 0 0" />
+          <mass
+            value=".388326" />
+          <inertia
+            ixx="0.0001432"
+            ixy="-0.0000013"
+            ixz="-0.000003"
+            iyy="0.0003879"
+            iyz="-0.0000059"
+            izz="0.0004005" />
+        </inertial>
+      
+        <visual>
+
+	<origin  
+	       xyz="0 0 0" 
+        rpy="0 0 0" />
+
+          <geometry>
+
+			 <mesh
+          filename="package://eigenbot/meshes/Gripper.STL" scale="1 1 1" 
+		/>    
+ 	</geometry>
+        </visual>  
+        
+        <collision>
+
+	       <origin  
+  	       xyz="0 0 0" 
+         rpy="0 0 0" />
+
+          <geometry>
+         
+		<mesh
+          filename="package://eigenbot/meshes/Gripper.STL" scale="1 1 1" 
+	/>          
+	</geometry>
+        </collision>
+        
+    <material name="black">
+      <color rgba="0.1 0.1 0.1 1"/>
+    </material>
+      </link>
+
+
+  <link name="gripper_virtual_${module_label}">
+      <inertial> 
+          <origin
+            xyz="0 0 0" 
+            rpy="0 0 0" />
+          <mass
+            value=".01" />
+          <inertia
+            ixx=".000001"
+            ixy="0"
+            ixz="0"
+            iyy=".000001"
+            iyz="0"
+            izz=".000001" />
+        </inertial>
+      
+
+      </link>	  
+
+
+
+ <joint name="gripper_joint_${module_label}" type="revolute">
+    <parent link="gripper_${module_label}"/>
+    <child link="gripper_virtual_${module_label}"/>
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="0 1 0"/> 
+    <limit effort="1000.0" lower="0" upper="2.6" velocity="2"/>
+  </joint>
+	  
+	  
+
+	  
+    </xacro:macro>
+</robot>
+
+
+

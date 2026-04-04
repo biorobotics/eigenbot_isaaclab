@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<!-- TODO: correct this to the right offsets from CAD -->
+<xacro:macro name="torsional_module" params="module_label">
+  
+    <link name="torsional_input_${module_label}">
+      <inertial>
+          <origin
+            xyz="0.0335 0 0"
+            rpy="0 0 0" />
+          <mass
+            value=".3" />
+          <inertia
+            ixx=".0001"
+            ixy="0"
+            ixz="0"
+            iyy=".0001"
+            iyz="0"
+            izz=".0001" />
+        </inertial>
+      
+        <visual>
+          <geometry>
+			<mesh
+          filename="package://eigenbot/meshes/Torsional_Module1.stl" scale="0.001 0.001 0.001" 
+/>       
+ </geometry>
+        </visual>  
+        
+        <collision>
+          <geometry>
+			<mesh
+          filename="package://eigenbot/meshes/Torsional_Module1.stl" scale="0.001 0.001 0.001" 
+/>              
+</geometry>
+        </collision>
+        
+        <material
+            name="">
+            <color
+              rgba="0.9 0.9 0.9 1" />
+         </material>  
+      </link>
+	  
+	   <link name="torsional_output_${module_label}">
+      
+      <inertial>
+          <origin
+            xyz="0.07 0 0"
+            rpy="0 0 0" />
+          <mass
+            value=".110" />
+          <inertia
+            ixx=".00001"
+            ixy="0"
+            ixz="0"
+            iyy=".00001"
+            iyz="0"
+            izz=".00001" />
+        </inertial>
+      
+        <visual>
+
+	<origin xyz="0 0 0" rpy="0 0 ${M_PI/2}" />
+
+          <geometry>
+			<mesh
+          filename="package://eigenbot/meshes/Torsional_Module2.stl" scale="0.001 0.001 0.001" 
+/>          </geometry>
+        </visual>  
+        
+        <collision>
+	<origin xyz="0 0 0" rpy="0 0 ${M_PI/2}" />
+
+          <geometry>
+			<mesh
+          filename="package://eigenbot/meshes/Torsional_Module2.stl" scale="0.001 0.001 0.001" 
+/>              </geometry>
+        </collision>
+        
+        <material
+            name="">
+            <color
+              rgba="0.9 0.9 0.9 1" />
+         </material>  
+      </link>
+	  
+	  
+  <joint name="torsional_joint_${module_label}" type="continuous">
+    <parent link="torsional_input_${module_label}"/>
+    <child link="torsional_output_${module_label}"/>
+    <origin xyz="0 0 0" rpy="0 ${-M_PI/2} 0" />
+  </joint>
+	  
+	  
+    </xacro:macro>
+</robot>
+
+
+

@@ -1,0 +1,25 @@
+This file just contains some scraps of code from description_assemlblyer for different robot arrangements.
+
+
+module_ID = ['Static_base_module',
+	     'Bendy_module', # make sure there's a comma separating these
+             'Static_link_module',
+             'Bendy_module',
+             'Static_elbow_module',
+             'Bendy_module',
+             'Static_elbow_module',
+             'Bendy_module',
+             'Static_link_module'] # these should match the file names
+module_attachments  = [ [[0, 0,'Bendy_module']], 
+			[[0,0,'Static_link_module']],
+			[[0, 0,'Bendy_module']], 
+			[[0, 0,'Static_elbow_module']], 
+			[[0, 2,'Bendy_module']], 
+			[[0, 2,'Static_elbow_module']], 
+			[[0, 2,'Bendy_module']],
+			[[0, 0,'Bendy_module']],  	
+			[] ] # where [] indicates there is nothing attached to its ports
+
+
+#module_ID =          [ 'Torsional_module',         'Torsional_module',   'Bendy_module'] # these should match the file names
+#module_attachments = [ [[0,0,'Torsional_module']], [[0, 0,'Bendy_module']], [] ] # where [] indicates there is nothing attached to its ports

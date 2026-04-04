@@ -1,0 +1,58 @@
+<?xml version="1.0"?> 
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="modular_robot_compiled">  
+
+<xacro:property name="M_PI" value="3.1415926535897931" /> 
+<link name="fix_base"></link> 
+<!--Include files for, then joint to attach, module type Module_Type_1-->
+<xacro:include filename="./cylinder_module.xacro"/>
+<xacro:cylinder_module module_label="M0"/>
+
+<joint name="module_0_attachment" type="fixed">
+<origin
+xyz="0 0 0"
+rpy="0 0 0"
+/>
+<parent link="fix_base"/>
+<child link="cylinder_base_M0"/>
+</joint>
+
+<!--Include files for, then joint to attach, module type Module_Type_2-->
+<xacro:include filename="./cube_module.xacro"/>
+<xacro:cube_module module_label="M1"/>
+
+<joint name="module_1_attachment" type="fixed">
+<origin
+xyz="0 0 0.05"
+rpy="0 0 -${M_PI/2}"
+/>
+<parent link="cylinder_base_M0"/>
+<child link="cube_base_M1"/>
+</joint>
+
+<!--Include files for, then joint to attach, module type Module_Type_1-->
+<xacro:include filename="./cylinder_module.xacro"/>
+<xacro:cylinder_module module_label="M2"/>
+
+<joint name="module_2_attachment" type="fixed">
+<origin
+xyz="0 0 0.05"
+rpy="0 0 ${M_PI}"
+/>
+<parent link="cube_base_M1"/>
+<child link="cylinder_base_M2"/>
+</joint>
+
+<!--Include files for, then joint to attach, module type Bendy_module-->
+<xacro:include filename="./bendy_module.xacro"/>
+<xacro:bendy_module module_label="M3"/>
+
+<joint name="module_3_attachment" type="fixed">
+<origin
+xyz="0 0 0.05"
+rpy="0 0 0"
+/>
+<parent link="cylinder_base_M2"/>
+<child link="bendy_input_M3"/>
+</joint>
+
+</robot>

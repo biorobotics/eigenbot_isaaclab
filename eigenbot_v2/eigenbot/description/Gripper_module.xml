@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!-- NOTES: Do not include any quotes ("") in the remained of this file, they get added when the file is written.-->
+
+<module>
+    <name>Gripper_module</name> 
+    	
+    	<!-- The module imported as an xacro which has its own physical properties, rigid bodies, joints, stl, etc -->
+    <filename>gripper_module.xacro</filename>
+    
+    <!-- Required: must tell module which link is the input port. The origin of this RB will be the input port. -->
+    <input_port>gripper_</input_port> <!-- Note: only one input port allowed at this time -->
+    
+    <!-- Each port gets a <port> block, and each port can have multiple mounts, but only one mount can be active at a time. -->
+
+
+<!-- this module has no outputs in reality but because of my rush programming I will put in a dummy port which is only used as a placeholder.-->
+    <output_ports>
+        <port>
+            <parent>gripper_</parent> <!-- This port is on the RB on the model-->
+    		 <!-- relative transforms of the origin of the parent link to the port mounts-->
+    		<mount> 
+        		<xyz>0 0 0</xyz>
+        		<rpy>0 0 0</rpy>
+        	</mount>
+    		
+        </port>    
+    </output_ports>
+</module>

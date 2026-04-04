@@ -1,0 +1,317 @@
+<?xml version="1.0"?>
+<!-- NOTES: Do not include any quotes () in the remaineder of this file, they get added when the file is written.-->
+
+<module>
+    <name>Eigenbody</name> 
+    	
+    	<!-- The module imported as an xacro which has its own physical properties, rigid bodies, joints, stl, etc -->
+    <filename>eigenbody.xacro</filename>
+    
+    <!-- Required: must tell module which link is the input port. The origin of this RB will be the input port. -->
+    <input_port>eigenbody_</input_port> <!-- Note: only one input port allowed at this time -->
+    
+    <!-- Each port gets a <port> block, and each port can have multiple mounts, but only one mount can be active at a time.
+
+
+    Hexapod Chassis LF  40.5    130 67.5
+    Hexapod Chassis LM  40.5    40  67.5
+    Hexapod Chassis LR  40.5    50  67.5
+    Hexapod Chassis RF  40.5    130 67.5
+    Hexapod Chassis RM  40.5    40  67.5
+    Hexapod Chassis RR  40.5    50  67.5
+    Hexapod Chassis Top Front   8   80  0
+    Hexapod Chassis Rear Front  0   0   0
+
+     -->
+    <output_ports>
+
+
+
+        <port> <!-- port 1 (left) -->
+            <parent>eigenbody_</parent> 
+    		<mount> 
+        		<xyz>-0.041 0.067 -0.13</xyz> 
+        		<rpy>0 0 ${-M_PI/2}</rpy>
+        	</mount> 
+            <mount> 
+                <xyz>-0.041 0.067 -0.13</xyz> 
+                <rpy>${M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 0.067 -0.13</xyz> 
+                <rpy>${2*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 0.067 -0.13</xyz> 
+                <rpy>${3*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 0.067 -0.13</xyz> 
+                <rpy>${4*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 0.067 -0.13</xyz> 
+                <rpy>${5*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 0.067 -0.13</xyz> 
+                <rpy>${6*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 0.067 -0.13</xyz> 
+                <rpy>${7*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+        </port>
+        <port> <!-- port 2 (left) -->
+            <parent>eigenbody_</parent> 
+            <mount> 
+                <xyz>-0.041 0.067 -0.04</xyz> 
+                <rpy>0 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 -0.04</xyz> 
+                <rpy>${M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 -0.04</xyz> 
+                <rpy>${2*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 -0.04</xyz> 
+                <rpy>${3*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 -0.04</xyz> 
+                <rpy>${4*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 -0.04</xyz> 
+                <rpy>${5*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 -0.04</xyz> 
+                <rpy>${6*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 -0.04</xyz> 
+                <rpy>${7*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+        </port>
+        <port> <!-- port 3 (left) -->
+            <parent>eigenbody_</parent> 
+            <mount> 
+                <xyz>-0.041 0.067 0.05</xyz> 
+                <rpy>0 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 0.05</xyz> 
+                <rpy>${M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 0.05</xyz> 
+                <rpy>${2*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 0.05</xyz> 
+                <rpy>${3*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 0.05</xyz> 
+                <rpy>${4*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 0.05</xyz> 
+                <rpy>${5*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 0.05</xyz> 
+                <rpy>${6*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 0.067 0.05</xyz> 
+                <rpy>${7*M_PI/4} 0 ${-M_PI/2}</rpy>
+            </mount>
+        </port>
+
+        <port> <!-- port 4 -->
+            <parent>eigenbody_</parent> 
+            <mount> 
+                <xyz>-0.041 -0.067 -0.13</xyz> 
+                <rpy>0 0 ${M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 -0.067 -0.13</xyz> 
+                <rpy>${M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 -0.067 -0.13</xyz> 
+                <rpy>${2*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 -0.067 -0.13</xyz> 
+                <rpy>${3*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 -0.067 -0.13</xyz> 
+                <rpy>${4*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 -0.067 -0.13</xyz> 
+                <rpy>${5*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 -0.067 -0.13</xyz> 
+                <rpy>${6*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount> 
+            <mount> 
+                <xyz>-0.041 -0.067 -0.13</xyz> 
+                <rpy>${7*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+        </port>
+        <port> <!-- port 5 -->
+            <parent>eigenbody_</parent> 
+            <mount> 
+                <xyz>-0.041 -0.067 -0.04</xyz> 
+                <rpy>0 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 -0.04</xyz> 
+                <rpy>${M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 -0.04</xyz> 
+                <rpy>${2*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 -0.04</xyz> 
+                <rpy>${3*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 -0.04</xyz> 
+                <rpy>${4*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 -0.04</xyz> 
+                <rpy>${5*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 -0.04</xyz> 
+                <rpy>${6*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 -0.04</xyz> 
+                <rpy>${7*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+        </port>
+        <port> <!-- port 6 -->
+            <parent>eigenbody_</parent> 
+            <mount> 
+                <xyz>-0.041 -0.067 0.05</xyz> 
+                <rpy>0 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 0.05</xyz> 
+                <rpy>${M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 0.05</xyz> 
+                <rpy>${2*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 0.05</xyz> 
+                <rpy>${3*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 0.05</xyz> 
+                <rpy>${4*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 0.05</xyz> 
+                <rpy>${5*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 0.05</xyz> 
+                <rpy>${6*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.041 -0.067 0.05</xyz> 
+                <rpy>${7*M_PI/4} 0 ${M_PI/2}</rpy>
+            </mount>
+        </port>
+
+    
+        <port> <!-- port 7 (top) -->
+            <parent>eigenbody_</parent> 
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>0 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${1*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${2*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${3*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${4*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${5*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${6*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${7*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+        </port>
+
+
+        <port> <!-- port 8 ( DOES NOT REALLY EXIST) -->
+            <parent>eigenbody_</parent> 
+            <mount> 
+                <xyz>0 0 0</xyz> 
+                <rpy>0 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${1*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${2*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${3*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${4*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${5*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${6*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+            <mount> 
+                <xyz>-0.009 0 -0.08</xyz> 
+                <rpy>${7*M_PI/4} 0 ${M_PI}</rpy>
+            </mount>
+        </port>
+
+            </output_ports>
+</module>

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<xacro:macro name="Module_Type_1" params="parent_module mount_xyz mount_rpy">
+<!-- use xacro macros to connect module urdfs-->
+
+    <!-- Overall useful variables -->
+    <xacro:property name="M_PI" value="3.1415926535897931" />
+    	
+	<!-- The module imported as an xacro which has its own physical properties, rigid bodies, joints, stl, etc -->
+    <xacro:include filename="module_type_1_model.urdf.xacro" />
+        
+    <!-- General properties of module not captured in typical urdf-->
+    <properties>
+		<!-- True if this module has a battery on it which can power other modules too-->
+        <provides_power>"False"</provides_power>
+    </properties>
+    
+    <!-- Each port gets a <port> block, and each port can have multiple mounts, but only one mount can be active at a time. -->
+    <port>
+        <!-- Example port is attached to a rigid body called output_link, and has 4 mounts -->
+        <parent = "output_link"> <!-- This port is on the RB on the module_type_1_model called output_link -->
+		 <!-- relative transforms of the origin of the parent link to the port mounts-->
+        <mount xyz="0 0 0.05" rpy="0 0 0"/>
+        <mount xyz="0 0 0.05" rpy="0 0 ${M_PI/2}"/>
+        <mount xyz="0 0 0.05" rpy="0 0 ${M_PI}"/>        
+        <mount xyz="0 0 0.05" rpy="0 0 ${-M_PI/2}"/>
+    </port>
+    
+</xacro:macro>

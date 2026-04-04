@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<xacro:macro name="bendy_module" params="module_label">
+  
+    <link name="bendy_input_${module_label}">
+      <inertial>
+          <origin
+            xyz="-0.023 0 0"
+            rpy="0 0 0" />
+          <mass
+            value="0.13536" />
+          <inertia
+            ixx="0.000047004"
+            ixy="-0.000000049"
+            ixz="0.000000017"
+            iyy="0.000068413"
+            iyz="0.000000009"
+            izz="0.000070686" />
+        </inertial>
+      
+        <visual>
+          <geometry>
+			<mesh
+          filename="package://eigenbot/meshes/Bendy In.STL" scale="1 1 1"/>          
+        </geometry>
+
+        </visual>  
+        
+        <collision>
+          <geometry>
+           <mesh
+          filename="package://eigenbot/meshes/Bendy In.STL" scale="1 1 1"/>    
+           </geometry>
+        </collision>
+        
+    <material name="black">
+      <color rgba="0.1 0.1 0.1 1"/>
+    </material>
+      </link>
+	  
+
+
+	   <link name="bendy_output_${module_label}">
+      
+      <inertial>
+          <origin
+            xyz="-0.029 0 0"
+            rpy="0 0 0" />
+          <mass
+            value=".03522" />
+          <inertia
+            ixx="0.000021977"
+            ixy="0.000000082"
+            ixz="-0.000000063"
+            iyy="0.000017473"
+            iyz="0.000000067"
+            izz="0.000021078" />
+        </inertial>
+      
+        <visual>
+          <geometry>
+          <mesh
+          filename="package://eigenbot/meshes/Bendy Out.STL" scale="1 1 1"/>            
+ 	        </geometry>
+
+ 	      <origin
+            xyz="0 0 0 "
+            rpy="0 0 0" />
+        </visual>  
+        
+        <collision>
+          <geometry>
+      <mesh
+          filename="package://eigenbot/meshes/Bendy Out.STL" scale="1 1 1"/>               
+        </geometry>
+                <origin
+            xyz="0 0 0"
+            rpy="0 0 0" />
+        </collision>
+        
+    <material name="black">
+      <color rgba="0.1 0.1 0.1 1"/>
+    </material> 
+      </link>
+	  
+	  
+	  
+	  
+  <joint name="bendy_joint_${module_label}" type="revolute">
+    <parent link="bendy_input_${module_label}"/>
+    <child link="bendy_output_${module_label}"/>
+    <origin xyz="-0.049 0 0" rpy="0 0 0" />
+    <axis xyz="0 1 0"/> 
+    <limit effort="100.0" lower="${-M_PI/2}" upper="${M_PI/2}" velocity="5"/>
+  </joint>
+	  
+	  
+    </xacro:macro>
+</robot>

@@ -1,0 +1,22 @@
+<launch>
+
+<!-- just to show the robot in the gazebo, no controller involved -->
+  <arg name="model" default="$(find titan6_description)/urdf/titan6.xacro" />
+  <param name="robot_description" command="rosrun xacro xacro --inorder $(arg model)" />
+  <node
+    name="spawn_model"
+    pkg="gazebo_ros"
+    type="spawn_model"
+    args="-z 1 -urdf -model robot -param robot_description"
+    output="screen" />
+
+
+  <!-- run the state publisher node by default -->
+  <arg name="run_state_publisher" default="false" />
+  <group if="$(arg run_state_publisher)">
+    <node pkg="robot_state_publisher" type="robot_state_publisher"  name="rob_st_pub">
+      <param name="publish_frequency" type="double" value="30.0" />
+    </node>
+  </group>
+
+</launch>

@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+<xacro:macro name="static_90deg_module" params="module_label">
+  
+    <link name="static_elbow_${module_label}">
+      <inertial> 
+          <origin
+            xyz="-0.03148 0.00004 -0.01437" 
+            rpy="0 0 0" />
+          <mass
+            value="0.06766" />
+          <inertia
+            ixx="0.000052397"
+            ixy="-0.0000001126"
+            ixz="0.000015681"
+            iyy="0.000065586"
+            iyz="-0.000000082"
+            izz="0.000053626" />
+        </inertial>
+      
+        <visual>
+	
+
+          <geometry>
+			 <mesh
+          filename="package://eigenbot/meshes/Elbow.STL" scale="1 1 1" />    
+		  
+ 	</geometry>
+        </visual>  
+        
+        <collision>
+
+          <geometry>
+       <mesh
+          filename="package://eigenbot/meshes/Elbow.STL" scale="1 1 1" />    
+		          
+	</geometry>
+        </collision>
+        
+    <material name="black">
+      <color rgba="0.1 0.1 0.1 1"/>
+    </material>
+      </link>
+	 
+    </xacro:macro>
+</robot>
+
+
+

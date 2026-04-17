@@ -337,6 +337,7 @@ class EigenbotEnv(DirectRLEnv):
         depth_updated = self._update_depth_buffer()
         obs = self._compute_observations()
         clip_val = self.cfg.normalization.clip_observations
+        obs = torch.nan_to_num(obs, nan=0.0, posinf=clip_val, neginf=-clip_val)
         obs = torch.clamp(obs, -clip_val, clip_val)
         self.extras["depth"] = None
         if self.cfg.depth_camera.use_camera and depth_updated:
@@ -345,7 +346,8 @@ class EigenbotEnv(DirectRLEnv):
         return {"policy": obs}
 
     def _get_rewards(self) -> torch.Tensor:
-        return self._compute_rewards()
+        rewards = self._compute_rewards()
+        return torch.nan_to_num(rewards, nan=0.0, posinf=0.0, neginf=0.0)
 
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
         return self._check_termination()
@@ -469,9 +471,9 @@ class EigenbotEnv(DirectRLEnv):
         ):
             self._push_robots()
 
-        # Store last values for next step
-        self.last_actions[:] = self.actions
-        self.last_dof_vel[:] = self.robot.data.joint_vel
+        # Store last values for next step (guard against NaN from physics explosion)
+        self.last_actions[:] = torch.nan_to_num(self.actions, nan=0.0)
+        self.last_dof_vel[:] = torch.nan_to_num(self.robot.data.joint_vel, nan=0.0)
 
     # ------------------------------------------------------------------
     # Observation computation
@@ -534,6 +536,9 @@ class EigenbotEnv(DirectRLEnv):
             self.motor_strength[0] - 1.0,               # 18
             self.motor_strength[1] - 1.0,               # 18
         ], dim=-1)
+
+        # Sanitize proprio before storing in history to prevent NaN persistence.
+        obs_proprio = torch.nan_to_num(obs_proprio, nan=0.0, posinf=100.0, neginf=-100.0)
 
         # Update observation history
         self.obs_history_buf = torch.where(
@@ -700,7 +705,10 @@ class EigenbotEnv(DirectRLEnv):
     # ------------------------------------------------------------------
     def _update_height_measurements(self):
         """Update measured heights from RayCaster sensor."""
-        self.measured_heights = self._height_scanner.data.ray_hits_w[..., 2]
+        hits = self._height_scanner.data.ray_hits_w[..., 2]
+        # Rays that miss the mesh return inf/NaN; substitute robot base height as a safe fallback.
+        fallback = self.robot.data.root_pos_w[:, 2:3].expand_as(hits)
+        self.measured_heights = torch.where(torch.isfinite(hits), hits, fallback)
 
     def _randomize_depth_camera_pose(self):
         """Apply the legacy front-camera mount and pitch randomization once per environment."""

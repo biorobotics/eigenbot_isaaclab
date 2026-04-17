@@ -58,24 +58,24 @@ class RewardScalesCfg:
     delta_yaw: float = 1.2
     lin_vel_z: float = -1.0
     ang_vel_xy: float = -0.05
-    orientation: float = -1.0
+    orientation: float = -0.25
     torques: float = -0.0002  # eigenbot override (base = -0.00001)
     dof_vel: float = 0.0
     dof_acc: float = -2.5e-7
     feet_air_time: float = 0.87
-    collision: float = -1.0
-    stumble: float = -1.5
+    collision: float = -0.25
+    stumble: float = -0.25
     action_rate: float = -0.01
     stand_still: float = -0.5
     rule_1: float = 0.35
     rule_3: float = 0.1
-    dof_pos_limits: float = -10.0  # eigenbot override
+    dof_pos_limits: float = -1.0
 
 
 @configclass
 class RewardsCfg:
     scales: RewardScalesCfg = RewardScalesCfg()
-    only_positive_rewards: bool = False
+    only_positive_rewards: bool = True
     tracking_sigma: float = 0.25
     soft_dof_pos_limit: float = 0.9  # eigenbot override
     soft_dof_vel_limit: float = 2.5  # eigenbot override
@@ -138,7 +138,7 @@ class ObsScalesCfg:
 class NormalizationCfg:
     obs_scales: ObsScalesCfg = ObsScalesCfg()
     clip_observations: float = 100.0
-    clip_actions: float = 100.0
+    clip_actions: float = 1.0
 
 
 @configclass

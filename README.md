@@ -22,6 +22,8 @@ python isaaclab/docker/container.py start --files eigenbot.yaml
 python isaaclab/docker/container.py enter --files eigenbot.yaml
 ```
 
+
+## Training and Simulation
 4. Inside the container, install the eigenbot extension and run it.
 ```bash
 # Install the eigenbot extension (one-time, or after rebuilding the container)
@@ -29,7 +31,6 @@ cd /workspace/eigenbot
 pip install -e source/eigenbot
 
 # Render the eigenbot with zero actions
-cd /workspace/eigenbot
 python scripts/zero_agent.py --task Template-Eigenbot-Direct-v0 --num_envs 1
 
 # Move the eigenbot with random actions (untested)
@@ -44,3 +45,19 @@ python scripts/rsl_rl/train.py --task Template-Eigenbot-Direct-v0 --num_envs 409
 # Replay trained checkpoint
 python scripts/rsl_rl/play.py --task Template-Eigenbot-Direct-v0 --num_envs 32
 ```
+
+### Monitoring Training
+During training, `rsl_rl` uses `tensorboard` as a visualizer to monitor training statistics such as loss and reward. You must first enter the docker image on a SEPARATE TERMINAL, then start the webserver to view these visualizations.
+
+```bash
+# Get the name of the docker container running the training job
+docker ps
+
+# Enter the docker image
+docker exec -it <container_name> bash
+
+# Inside the docker image
+tensorboard --logdir /workspace/eigenbot/logs/rsl_rl/eigenbot_locomotion --port 6006
+```
+
+Then open the URL in a browser to view the visualizer.

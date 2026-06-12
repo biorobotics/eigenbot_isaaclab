@@ -75,17 +75,24 @@ joint offsets in R^18  ->  target = default_dof_pos + offset  ->  PD -> torque
 
 ### One subtlety to know about
 
-`EigenbotEnv._init_buffers` sizes `actions`, `last_actions`, and `last_dof_vel`
-from `cfg.action_space`. Since the CPG cfg sets `action_space = 7`, the subclass
-re-allocates those three joint-space buffers back to 18 (and adds the 7D
-`policy_actions`). This is why `EigenbotCPGEnv` overrides `_init_buffers` rather
-than just changing the cfg.
+`EigenbotEnv._init_buffers` sizes *every* joint-dimension buffer (`actions`,
+`torques`, `motor_strength`, the action-delay ring buffer, ...) from
+`cfg.action_space`, and it ends by applying domain randomization, which
+multiplies those buffers against `(num_envs, 18)` robot data. Since the CPG cfg
+sets `action_space = 7`, `EigenbotCPGEnv._init_buffers` temporarily swaps
+`cfg.action_space` to 18 for the parent call (so all joint buffers come out the
+right size and DR doesn't crash), restores it afterwards, and then allocates
+the separate 7D `policy_actions` buffers. This is why the subclass overrides
+`_init_buffers` rather than just changing the cfg.
 
 ## How to run
 
 Inside the Isaac Lab container (see top-level `README.md` for container setup):
 
 ```bash
+# Step 0 — offline CPG sanity tests (any machine with PyTorch, no Isaac Sim):
+python scripts/test_cpg.py
+
 cd /workspace/eigenbot
 pip install -e source/eigenbot            # one-time, picks up the new modules
 
@@ -118,6 +125,11 @@ each leg's first joint as the swing (coxa/yaw) joint and the next two as lift
   lifts. Print `env.robot.data.joint_names` once and map them to legs.
 - `lift_joint_signs` / `swing_amplitude` / `lift_amplitude` — set so a swinging
   leg clears the ground and protracts forward, not sideways or into the body.
+- `lift_phase_sign` — which oscillator half-cycle the leg lifts in. The default
+  (`-1.0`) lifts while the swing offset is increasing, i.e. the leg protracts
+  through the air and strokes rearward during stance (forward travel when a
+  positive swing offset means "leg forward"). If the robot walks backward in
+  sim, flip this to `1.0` or negate `swing_amplitude`.
 - `leg_sides` — left/right assignment used for differential steering.
 - `omega` — gait frequency (default ~1.5 Hz); `b_min/b_max` — stride/clearance range.
 
@@ -176,13 +188,14 @@ predicted terrain height/contact — no change to the CPG or actuation path.
 ## Notes / caveats
 
 - This code was written against the existing env API but **has not been run in
-  Isaac Lab here** (no GPU/sim in this environment). The CPG math and tensor
-  shapes were validated with a standalone numpy reimplementation: tripod phasing
-  is exact (groups π apart), the limit cycle is stable (radius ≈ 1.0), joint
-  offsets stay bounded (≤ ~0.55 rad), and steering produces the expected
-  left/right asymmetry. Expect to do the kinematic tuning above on first run.
+  Isaac Lab here** (no GPU/sim in this environment). The CPG math is covered by
+  `scripts/test_cpg.py`, which runs the real `cpg.py` offline: tripod phasing is
+  exact (groups π apart), the limit cycle is stable and recovers from large
+  state kicks, joint offsets stay bounded (≤ ~1.08 rad worst-case at θ=1,
+  b=b_max — under the ±π/2 limits), the leg protracts while lifted, and
+  steering produces the expected left/right asymmetry. Expect to do the
+  kinematic tuning above on first run.
 - The ring coupling in `cpg.py` is computed with a small python loop over the 6
   legs each substep (vectorized over environments). It's fine at 4096 envs, but
   if you profile a bottleneck, precompute the constant rotation coefficients
   once in `__init__` instead of per step.
-```

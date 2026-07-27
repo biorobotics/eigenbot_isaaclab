@@ -95,7 +95,7 @@ class HopfCPG:
         Returns theta (num_envs,) in [-1, 1] and b (num_envs, num_legs) in
         [b_min, b_max].
         """
-        action = torch.clamp(action, -1.0, 1.0)
+        action = torch.tanh(action)
         theta = action[:, 0]
         b_raw = action[:, 1 : 1 + self.num_legs]  # (ne, num_legs) in [-1, 1]
         b_mid = 0.5 * (self.cfg.b_max + self.cfg.b_min)

@@ -282,7 +282,7 @@ class EigenbotEnvCfg(DirectRLEnvCfg):
     # terrain
     terrain: TerrainImporterCfg = TerrainImporterCfg(
         prim_path="/World/ground",
-        terrain_type="generator", # Alternatively, use "plane" here
+        terrain_type="plane", # Alternatively, use "plane" here
         terrain_generator=EIGENBOT_ROUGH_TERRAIN_CFG,
         max_init_terrain_level=5,
         collision_group=-1,
@@ -300,7 +300,7 @@ class EigenbotEnvCfg(DirectRLEnvCfg):
     height_scanner: RayCasterCfg = RayCasterCfg(
         prim_path="/World/envs/env_.*/Robot/base_link",
         offset=RayCasterCfg.OffsetCfg(pos=(0.375, 0.0, 20.0)),
-        ray_alignment="yaw",
+        attach_yaw_only=True,
         pattern_cfg=patterns.GridPatternCfg(resolution=0.15, size=[1.65, 1.5]),
         mesh_prim_paths=["/World/ground"],
         debug_vis=False,

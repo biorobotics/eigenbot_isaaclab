@@ -63,9 +63,8 @@ class EigenbotCPGEnv(EigenbotEnv):
 
     # ------------------------------------------------------------------
     def _pre_physics_step(self, actions: torch.Tensor) -> None:
-        clip_val = self.cfg.normalization.clip_actions
         self.last_policy_actions[:] = self.policy_actions
-        self.policy_actions = torch.clamp(actions, -clip_val, clip_val)
+        self.policy_actions = torch.nan_to_num(actions.clone(), nan=0.0)
 
     # ------------------------------------------------------------------
     def _apply_action(self) -> None:

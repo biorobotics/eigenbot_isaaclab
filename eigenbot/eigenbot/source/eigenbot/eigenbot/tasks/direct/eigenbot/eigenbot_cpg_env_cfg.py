@@ -52,17 +52,17 @@ class CPGCfg:
     # first index is treated as the swing (coxa/yaw) joint and the next two as
     # lift (femur/tibia) joints. Verify against the URDF joint order and adjust.
     leg_joint_indices: tuple = (
-        (0, 1, 2),
-        (3, 4, 5),
-        (6, 7, 8),
-        (9, 10, 11),
-        (12, 13, 14),
-        (15, 16, 17),
+        (0, 6, 12),   # leg 0: M1 swing, M7 lift, M13 lift  (rear,  side A)
+        (1, 7, 13),   # leg 1: M2, M8, M14                  (mid,   side A)
+        (2, 8, 14),   # leg 2: M3, M9, M15                  (front, side A)
+        (3, 9, 15),   # leg 3: M4, M10, M16                 (rear,  side B)
+        (4, 10, 16),  # leg 4: M5, M11, M17                 (mid,   side B)
+        (5, 11, 17),  # leg 5: M6, M12, M18                 (front, side B)
     )
     # Signs applied to the two lift joints (femur lifts +, tibia counter-rotates).
     lift_joint_signs: tuple = (1.0, -0.5)
     # Body side per leg: +1 left, -1 right. Used for differential steering.
-    leg_sides: tuple = (1.0, -1.0, 1.0, -1.0, 1.0, -1.0)
+    leg_sides: tuple = (-1.0, -1.0, -1.0, 1.0, 1.0, 1.0)   # M1-3 one side, M4-6 the other
 
     # --- residual mode -----------------------------------------------
     # If True, the policy outputs an additional 18 per-joint corrections that are

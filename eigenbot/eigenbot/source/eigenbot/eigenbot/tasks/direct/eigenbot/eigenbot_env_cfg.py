@@ -206,11 +206,17 @@ EIGENBOT_ROUGH_TERRAIN_CFG = TerrainGeneratorCfg(
     vertical_scale=0.005,
     slope_threshold=0.75,
     sub_terrains={
+        "flat": terrain_gen.MeshPlaneTerrainCfg(proportion=0.2),
         "random_rough": terrain_gen.HfRandomUniformTerrainCfg(
-            proportion=1.0,
-            noise_range=(0.02, 0.10),
-            noise_step=0.02,
-            border_width=0.25,
+            proportion=0.4, noise_range=(0.02, 0.10), noise_step=0.02, border_width=0.25,
+        ),
+        "slopes": terrain_gen.HfPyramidSlopedTerrainCfg(
+            proportion=0.2, slope_range=(0.0, 0.25), platform_width=2.0, border_width=0.25,
+        ),
+        "obstacles": terrain_gen.HfDiscreteObstaclesTerrainCfg(
+            proportion=0.2, obstacle_height_mode="choice",
+            obstacle_width_range=(0.4, 1.0), obstacle_height_range=(0.02, 0.08),
+            num_obstacles=40, platform_width=2.0, border_width=0.25,
         ),
     },
 )

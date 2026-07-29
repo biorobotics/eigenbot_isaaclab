@@ -76,7 +76,7 @@ class StubCfg:
         (4, 10, 16),
         (5, 11, 17),
     )
-    lift_joint_signs = (1.0, -0.5)
+    lift_joint_signs = (1.0, 0.5)  # antiparallel distal axis -> same sign = counter-bend
     lift_scales = (1.35, 1.0, 1.0, 1.35, 1.0, 1.0)  # legs 0 and 3 are the rear pair
     leg_sides = (-1.0, -1.0, -1.0, 1.0, 1.0, 1.0)
 
@@ -192,18 +192,28 @@ def test_bounded_offsets():
 
 
 def test_steering_asymmetry():
+    """A full turn command must scale each leg's stride by
+    ``1 - turn_gain * theta * leg_side`` — i.e. lengthen one side and shorten
+    the other. Checked per leg against the cfg so the test can't be fooled by
+    which physical side is which."""
     cpg = HopfCPG(StubCfg, num_envs=1, device=DEVICE)
     action = torch.zeros(1, 7)
     action[0, 0] = SAT  # full turn
-    left_max, right_max = 0.0, 0.0
+    peak = [0.0] * StubCfg.num_legs
     for _ in range(int(4.0 / DT)):
         off = cpg.step(action, DT)
-        left_max = max(left_max, abs(_leg_offsets(off, leg=0)[0]))   # side A swing
-        right_max = max(right_max, abs(_leg_offsets(off, leg=3)[0]))  # side B swing
-    # steer = 1 -/+ turn_gain -> ~0.40 vs ~1.60 stride scaling
-    ratio = right_max / max(left_max, 1e-9)
-    assert 3.0 < ratio < 5.0, f"L/R stride ratio {ratio:.2f}, expected ~4 (1.6/0.4)"
-    print(f"[ok] steering asymmetry (R/L stride ratio {ratio:.2f} ~ 4)")
+        for leg in range(StubCfg.num_legs):
+            peak[leg] = max(peak[leg], abs(_leg_offsets(off, leg)[0]))
+    theta = math.tanh(SAT)  # b slots stay 0 -> b = 1.0
+    for leg in range(StubCfg.num_legs):
+        expected = StubCfg.swing_amplitude * (1.0 - StubCfg.turn_gain * theta * StubCfg.leg_sides[leg])
+        assert abs(peak[leg] - expected) < 0.03, (
+            f"leg {leg} stride {peak[leg]:.3f} != expected {expected:.3f} "
+            f"(side {StubCfg.leg_sides[leg]:+.0f}); check turn_gain / leg_sides"
+        )
+    ratio = max(peak) / max(min(peak), 1e-9)
+    assert 3.0 < ratio < 5.0, f"long/short stride ratio {ratio:.2f}, expected ~4 (1.6/0.4)"
+    print(f"[ok] steering asymmetry (long/short stride ratio {ratio:.2f} ~ 4, per-leg sides correct)")
 
 
 def test_reset():

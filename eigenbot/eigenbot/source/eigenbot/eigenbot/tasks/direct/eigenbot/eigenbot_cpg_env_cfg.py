@@ -59,8 +59,16 @@ class CPGCfg:
         (4, 10, 16),  # leg 4: M5, M11, M17                 (mid,   side B)
         (5, 11, 17),  # leg 5: M6, M12, M18                 (front, side B)
     )
-    # Signs applied to the two lift joints (femur lifts +, tibia counter-rotates).
-    lift_joint_signs: tuple = (1.0, -0.5)
+    # Signs applied to the two lift joints [M(k+6), M(k+12)].
+    # The URDF rotates the distal module's frame so its axis is ANTIPARALLEL to
+    # the middle module's (connection_12 Rx(pi/2) then connection_18
+    # Rz(pi/2)Rx(pi/2)). Same-signed commands therefore rotate the two segments
+    # in OPPOSITE world directions — that is what folds the leg into its Z
+    # stance, and it is why the robot's default pose sets M7..M18 all to +pi/4.
+    # An opposite-signed pair (the original (1.0, -0.5)) instead swings both
+    # segments the same way, so the shank trails the thigh, the foot scuffs
+    # backward through swing, and the loaded rear legs slip out.
+    lift_joint_signs: tuple = (1.0, 0.5)
     # Static per-leg lift multiplier, indexed like leg_joint_indices (legs 0..5 =
     # modules M1..M6). Legs 0 and 3 are the REAR pair: their attachments sit
     # furthest back (URDF x = -0.13 vs +0.05 for the front pair), so they carry

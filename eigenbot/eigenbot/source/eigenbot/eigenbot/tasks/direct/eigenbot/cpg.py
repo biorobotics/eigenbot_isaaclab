@@ -68,6 +68,10 @@ class HopfCPG:
         self._swing_amp = cfg.swing_amplitude
         self._lift_amp = cfg.lift_amplitude
         self._lift_signs = torch.tensor(cfg.lift_joint_signs, device=device)  # (2,)
+        # Static per-leg lift multiplier: the rear pair carries more of the body
+        # weight (its attachment points sit furthest back), so equal commanded
+        # lift leaves those feet dragging. See CPGCfg.lift_scales.
+        self._lift_scales = torch.tensor(cfg.lift_scales, device=device).unsqueeze(0)  # (1, num_legs)
         # Side of body for each leg (+1 left, -1 right) for differential steering.
         self._leg_side = torch.tensor(cfg.leg_sides, device=device)  # (num_legs,)
 
@@ -185,7 +189,7 @@ class HopfCPG:
         # protract through the air and stroke rearward during stance, i.e. the
         # body travels forward when a positive swing offset means "leg forward".
         clearance = torch.clamp(self.cfg.lift_phase_sign * y_n, min=0.0)
-        lift = self._lift_amp * b * clearance                 # (ne, L)
+        lift = self._lift_amp * self._lift_scales * b * clearance   # (ne, L)
 
         # Scatter into the 18-dim joint vector.
         for leg in range(self.num_legs):

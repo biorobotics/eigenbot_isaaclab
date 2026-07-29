@@ -12,11 +12,15 @@ checks the properties the implementation guide promises:
                               diverging (exercises the Euler guard)
   4. gait direction         — the leg protracts (swing offset increases) while
                               lifted; regression test for ``lift_phase_sign``
-  5. bounded offsets        — worst-case action keeps |offset| under the ±π/2
+  5. rear-leg lift boost    — ``lift_scales`` gives legs 0/3 more clearance
+  6. bounded offsets        — worst-case action keeps |offset| under the ±π/2
                               joint limits
-  6. steering asymmetry     — theta scales left/right strides oppositely
-  7. reset()                — restores selected envs onto the limit cycle
-  8. batching               — shapes correct for num_envs > 1
+  7. steering asymmetry     — theta scales left/right strides oppositely
+  8. reset()                — restores selected envs onto the limit cycle
+  9. batching               — shapes correct for num_envs > 1
+
+Note: the policy action is squashed with ``tanh`` inside ``_decode_action``, so
+"maximum" commands here use ±3 (tanh(3) ≈ 0.995), not ±1.
 
 Usage (any machine with PyTorch):
 
@@ -62,21 +66,25 @@ class StubCfg:
     swing_amplitude = 0.45
     lift_amplitude = 0.55
     lift_phase_sign = -1.0
+    # leg k = modules M(k+1) / M(k+7) / M(k+13); articulation order is
+    # breadth-first, so a leg's three joints are 6 apart, not adjacent.
     leg_joint_indices = (
-        (0, 1, 2),
-        (3, 4, 5),
-        (6, 7, 8),
-        (9, 10, 11),
-        (12, 13, 14),
-        (15, 16, 17),
+        (0, 6, 12),
+        (1, 7, 13),
+        (2, 8, 14),
+        (3, 9, 15),
+        (4, 10, 16),
+        (5, 11, 17),
     )
     lift_joint_signs = (1.0, -0.5)
-    leg_sides = (1.0, -1.0, 1.0, -1.0, 1.0, -1.0)
+    lift_scales = (1.35, 1.0, 1.0, 1.35, 1.0, 1.0)  # legs 0 and 3 are the rear pair
+    leg_sides = (-1.0, -1.0, -1.0, 1.0, 1.0, 1.0)
 
 
 DT = 0.005  # physics dt the env integrates the CPG at
 DEVICE = "cpu"
 TRIPOD = torch.tensor(StubCfg.phase_offsets)
+SAT = 3.0  # tanh(3) ~ 0.995: a "full" command after the squash
 
 
 def _zero_action(ne: int) -> torch.Tensor:
@@ -88,6 +96,12 @@ def _phase_diff(phases: torch.Tensor) -> torch.Tensor:
     """Per-leg phase offset vs leg 0, wrapped to [-pi, pi]."""
     d = phases - phases[:, [0]]
     return (d + math.pi) % (2 * math.pi) - math.pi
+
+
+def _leg_offsets(off: torch.Tensor, leg: int, env: int = 0):
+    """(swing, lift) for one leg out of an 18-dim offset vector."""
+    j_sw, j_la, _ = StubCfg.leg_joint_indices[leg]
+    return off[env, j_sw].item(), off[env, j_la].item()
 
 
 def test_tripod_phase_locking():
@@ -131,10 +145,10 @@ def test_protraction_during_lift():
     cpg = HopfCPG(StubCfg, num_envs=1, device=DEVICE)
     deltas = []
     prev_swing = None
-    lift_max = StubCfg.lift_amplitude
+    lift_max = StubCfg.lift_amplitude * StubCfg.lift_scales[0]
     for _ in range(int(2.0 / DT)):
-        off = cpg.step(_zero_action(1), DT)[0]
-        swing, lift = off[0].item(), off[1].item()  # leg 0: swing joint, +lift joint
+        off = cpg.step(_zero_action(1), DT)
+        swing, lift = _leg_offsets(off, leg=0)
         if prev_swing is not None and lift > 0.3 * lift_max:
             deltas.append(swing - prev_swing)
         prev_swing = swing
@@ -146,9 +160,28 @@ def test_protraction_during_lift():
     print(f"[ok] gait direction (swing {mean_d:+.4f}/step while lifted -> protracts)")
 
 
+def test_rear_leg_lift_boost():
+    """lift_scales must give the rear pair (legs 0, 3) more clearance than the
+    others at the same command — the fix for rear-leg drag."""
+    cpg = HopfCPG(StubCfg, num_envs=1, device=DEVICE)
+    peak = [0.0] * StubCfg.num_legs
+    for _ in range(int(2.0 / DT)):
+        off = cpg.step(_zero_action(1), DT)
+        for leg in range(StubCfg.num_legs):
+            peak[leg] = max(peak[leg], _leg_offsets(off, leg)[1])
+    for rear in (0, 3):
+        for other in (1, 2, 4, 5):
+            ratio = peak[rear] / max(peak[other], 1e-9)
+            assert ratio > 1.2, (
+                f"leg {rear} peak lift {peak[rear]:.3f} not above leg {other} "
+                f"{peak[other]:.3f} (ratio {ratio:.2f}); check cfg.lift_scales"
+            )
+    print(f"[ok] rear-leg lift boost (rear {peak[0]:.3f} rad vs mid/front {peak[1]:.3f} rad)")
+
+
 def test_bounded_offsets():
     cpg = HopfCPG(StubCfg, num_envs=1, device=DEVICE)
-    worst_action = torch.ones(1, 7)  # theta = 1, b = b_max on every leg
+    worst_action = torch.full((1, 7), SAT)  # full turn, b -> b_max on every leg
     worst = 0.0
     for _ in range(int(4.0 / DT)):
         off = cpg.step(worst_action, DT)
@@ -161,13 +194,13 @@ def test_bounded_offsets():
 def test_steering_asymmetry():
     cpg = HopfCPG(StubCfg, num_envs=1, device=DEVICE)
     action = torch.zeros(1, 7)
-    action[0, 0] = 1.0  # full turn
+    action[0, 0] = SAT  # full turn
     left_max, right_max = 0.0, 0.0
     for _ in range(int(4.0 / DT)):
         off = cpg.step(action, DT)
-        left_max = max(left_max, off[0, 0].abs().item())   # leg 0 (left) swing
-        right_max = max(right_max, off[0, 3].abs().item())  # leg 1 (right) swing
-    # steer = 1 -/+ turn_gain -> 0.4 vs 1.6 stride scaling
+        left_max = max(left_max, abs(_leg_offsets(off, leg=0)[0]))   # side A swing
+        right_max = max(right_max, abs(_leg_offsets(off, leg=3)[0]))  # side B swing
+    # steer = 1 -/+ turn_gain -> ~0.40 vs ~1.60 stride scaling
     ratio = right_max / max(left_max, 1e-9)
     assert 3.0 < ratio < 5.0, f"L/R stride ratio {ratio:.2f}, expected ~4 (1.6/0.4)"
     print(f"[ok] steering asymmetry (R/L stride ratio {ratio:.2f} ~ 4)")
@@ -200,6 +233,7 @@ if __name__ == "__main__":
     test_limit_cycle_stable()
     test_perturbation_recovery()
     test_protraction_during_lift()
+    test_rear_leg_lift_boost()
     test_bounded_offsets()
     test_steering_asymmetry()
     test_reset()

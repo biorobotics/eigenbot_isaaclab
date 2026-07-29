@@ -288,7 +288,7 @@ class EigenbotEnvCfg(DirectRLEnvCfg):
     # terrain
     terrain: TerrainImporterCfg = TerrainImporterCfg(
         prim_path="/World/ground",
-        terrain_type="plane", # Alternatively, use "plane" here
+        terrain_type="generator",  # use "plane" for flat-ground visual debugging
         terrain_generator=EIGENBOT_ROUGH_TERRAIN_CFG,
         max_init_terrain_level=5,
         collision_group=-1,

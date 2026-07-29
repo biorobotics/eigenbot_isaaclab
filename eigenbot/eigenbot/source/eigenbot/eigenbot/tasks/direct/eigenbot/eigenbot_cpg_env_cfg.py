@@ -61,6 +61,13 @@ class CPGCfg:
     )
     # Signs applied to the two lift joints (femur lifts +, tibia counter-rotates).
     lift_joint_signs: tuple = (1.0, -0.5)
+    # Static per-leg lift multiplier, indexed like leg_joint_indices (legs 0..5 =
+    # modules M1..M6). Legs 0 and 3 are the REAR pair: their attachments sit
+    # furthest back (URDF x = -0.13 vs +0.05 for the front pair), so they carry
+    # the most load and drag with uniform lift. Boosting them here fixes the gait
+    # open-loop instead of hoping RL discovers it (velocity reward is reachable
+    # on four legs, so the policy happily leaves the rears flat).
+    lift_scales: tuple = (1.35, 1.0, 1.0, 1.35, 1.0, 1.0)
     # Body side per leg: +1 left, -1 right. Used for differential steering.
     leg_sides: tuple = (-1.0, -1.0, -1.0, 1.0, 1.0, 1.0)   # M1-3 one side, M4-6 the other
 

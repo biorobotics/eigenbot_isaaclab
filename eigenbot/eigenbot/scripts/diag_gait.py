@@ -40,6 +40,9 @@ parser.add_argument("--lift", type=float, default=None, help="Override CPGCfg.li
 parser.add_argument("--lift_signs", type=str, default=None, help='Override CPGCfg.lift_joint_signs, e.g. "1.0,0.5".')
 parser.add_argument("--lift_scales", type=str, default=None, help='Override CPGCfg.lift_scales, 6 values.')
 parser.add_argument("--omega_hz", type=float, default=None, help="Override gait frequency in Hz.")
+parser.add_argument("--stiffness", type=float, default=None, help="Override joint PD stiffness.")
+parser.add_argument("--damping", type=float, default=None, help="Override joint PD damping.")
+parser.add_argument("--effort", type=float, default=None, help="Override joint effort (torque) limit.")
 AppLauncher.add_app_launcher_args(parser)
 args_cli, _ = parser.parse_known_args()
 
@@ -95,11 +98,38 @@ def _apply_overrides(cfg) -> None:
     )
 
 
+def _apply_actuator_overrides(cfg) -> None:
+    """Patch joint PD gains / torque limit so actuator strength can be swept
+    without editing assets/eigenbot.py."""
+    if all(v is None for v in (args_cli.stiffness, args_cli.damping, args_cli.effort)):
+        return
+    robot = getattr(cfg, "robot", None)
+    actuators = getattr(robot, "actuators", None) if robot is not None else None
+    if not actuators:
+        print("[warn] no robot actuators found on cfg; skipping actuator overrides")
+        return
+    for name, act in actuators.items():
+        if args_cli.stiffness is not None:
+            act.stiffness = args_cli.stiffness
+        if args_cli.damping is not None:
+            act.damping = args_cli.damping
+        if args_cli.effort is not None:
+            # attribute is effort_limit on Isaac Lab 2.0, effort_limit_sim on 2.1+
+            for attr in ("effort_limit", "effort_limit_sim"):
+                if hasattr(act, attr) and getattr(act, attr) is not None:
+                    setattr(act, attr, args_cli.effort)
+        print(f"[cfg] actuator '{name}': stiffness={act.stiffness} damping={act.damping} effort={args_cli.effort}")
+    # keep the reward-side torque model consistent with the real limit
+    if args_cli.effort is not None and hasattr(cfg, "rewards"):
+        cfg.rewards.torque_limit_hard = args_cli.effort
+
+
 def main():
     env_cfg = parse_env_cfg(args_cli.task, num_envs=1)
     if hasattr(env_cfg, "depth_camera"):
         env_cfg.depth_camera.use_camera = False
     _apply_overrides(env_cfg)
+    _apply_actuator_overrides(env_cfg)
 
     env = gym.make(args_cli.task, cfg=env_cfg)
     u = env.unwrapped
@@ -163,11 +193,20 @@ def main():
     travel = (B[-1, :2] - B[0, :2]).norm().item()
     forward = (B[-1, 0] - B[0, 0]).item()
     lateral = (B[-1, 1] - B[0, 1]).item()
+    duration = args_cli.seconds - args_cli.settle
+    height = B[:, 2].mean().item() - ground
+    target_h = getattr(getattr(env_cfg, "rewards", None), "base_height_target", None)
     print("-" * 74)
     print(
-        f"body: travel {travel:.2f} m (fwd {forward:+.2f}, lat {lateral:+.2f}) | "
-        f"mean height {(B[:, 2].mean().item() - ground) * 100.0:.1f}cm"
+        f"body: travel {travel:.2f} m (fwd {forward:+.2f}, lat {lateral:+.2f}) "
+        f"= {travel / duration:.3f} m/s | mean height {height * 100.0:.1f}cm"
+        + (f" (reward target {target_h * 100.0:.0f}cm)" if target_h else "")
     )
+    if target_h and height < 0.7 * target_h:
+        print(
+            f"NOTE: body is riding {(1 - height / target_h) * 100:.0f}% below the reward's "
+            "height target — the legs are squatting under load. Try --stiffness/--effort."
+        )
 
     rear = [clearances[0], clearances[3]]
     others = [clearances[1], clearances[2], clearances[4], clearances[5]]

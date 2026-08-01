@@ -75,7 +75,12 @@ class CPGCfg:
     # the most load and drag with uniform lift. Boosting them here fixes the gait
     # open-loop instead of hoping RL discovers it (velocity reward is reachable
     # on four legs, so the policy happily leaves the rears flat).
-    lift_scales: tuple = (1.35, 1.0, 1.0, 1.35, 1.0, 1.0)
+    # Measured with scripts/diag_gait.py at 1.0 Hz: leg 0 was the last laggard
+    # (1.3cm clearance / 78% stance vs ~2.5cm / 64% for the front legs), so it
+    # gets the largest boost. Tuning these is the correct lever for uneven
+    # clearance — the joint PD gains and torque limit mirror the real hardware
+    # and must NOT be raised to compensate.
+    lift_scales: tuple = (1.7, 1.0, 1.0, 1.35, 1.0, 1.0)
     # Body side per leg: +1 left, -1 right. Used for differential steering.
     leg_sides: tuple = (-1.0, -1.0, -1.0, 1.0, 1.0, 1.0)   # M1-3 one side, M4-6 the other
 

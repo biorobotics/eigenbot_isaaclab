@@ -84,7 +84,11 @@ class EigenbotCPGEnv(EigenbotEnv):
         # Expose the commanded joint offsets as the "actions" the obs/reward use.
         self.actions = offsets
 
+        # Respect the soft joint limits. Without this a large per-leg gain can
+        # command the swing joint past +/-pi/2 (default stance is already
+        # +/-pi/4), which jams the joint and folds the leg instead of stepping.
         targets = self.default_dof_pos + offsets
+        targets = torch.clamp(targets, self.dof_pos_limits[:, 0], self.dof_pos_limits[:, 1])
         self.robot.set_joint_position_target(targets)
 
         # PD -> torque, identical to the baseline env.

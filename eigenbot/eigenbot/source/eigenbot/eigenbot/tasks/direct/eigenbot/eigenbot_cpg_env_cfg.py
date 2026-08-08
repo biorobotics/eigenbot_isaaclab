@@ -37,7 +37,11 @@ class CPGCfg:
 
     # --- action -> gait mapping --------------------------------------
     b_min: float = 0.5            # per-leg foot-mapping gain range
-    b_max: float = 1.5
+    # Capped 1.5 -> 1.25: at b=1.5 the swing offset (0.45*1.5 = 0.675 rad) plus
+    # the +/-pi/4 default stance runs into the +/-pi/2 joint limit, which is what
+    # made the front legs fold. Measurements also showed b>1 slowed the robot
+    # down (more load on the rear pair), so the top of the old range was useless.
+    b_max: float = 1.25
     turn_gain: float = 0.6        # how strongly theta biases L/R stride
     swing_amplitude: float = 0.45  # rad of fore/aft protraction at b=1
     lift_amplitude: float = 0.55   # rad of leg lift during swing at b=1

@@ -54,7 +54,11 @@ class RewardScalesCfg:
     """Reward scales, applied per-step (multiplied by dt internally)."""
 
     termination: float = -1.0
-    tracking_goal_vel: float = 4.0
+    # Raised 4.0 -> 10.0 after the first 10k comparison: with the old weights a
+    # policy that merely stayed upright and cycled its legs scored ~95 without
+    # travelling (the 18-DOF PPO baseline learned exactly that), so reward was
+    # not discriminating locomotion from vibrating in place.
+    tracking_goal_vel: float = 10.0
     delta_yaw: float = 1.2
     lin_vel_z: float = -1.0
     ang_vel_xy: float = -0.05
@@ -90,7 +94,10 @@ class RewardsCfg:
 
 @configclass
 class CommandRangesCfg:
-    lin_vel_x: tuple = (0.0, 0.5)
+    # Floor raised off zero: commands below lin_vel_clip (0.1) are zeroed, which
+    # let "stand still" satisfy the velocity-tracking term outright. Every
+    # episode now demands actual forward travel.
+    lin_vel_x: tuple = (0.2, 0.4)
     lin_vel_y: tuple = (0.0, 0.0)
     ang_vel_yaw: tuple = (-1.0, 1.0)
     heading: tuple = (-math.pi / 3, math.pi / 3)

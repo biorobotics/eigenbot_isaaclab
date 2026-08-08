@@ -103,11 +103,15 @@ def main():
 
     env = gym.make(args_cli.task, cfg=env_cfg)
     u = env.unwrapped
+    print("[eval] env created; wrapping...", flush=True)
     wrapped = RslRlVecEnvWrapper(env)
+    print("[eval] wrapped; building runner...", flush=True)
 
     runner = OnPolicyRunner(wrapped, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
+    print("[eval] runner built; loading checkpoint...", flush=True)
     runner.load(resume_path)
     policy = runner.get_inference_policy(device=u.device)
+    print("[eval] policy ready; starting rollouts", flush=True)
 
     # Which sub-terrain each env sits on. TerrainImporter lays sub-terrains out
     # along columns, so column index -> sub-terrain type.
@@ -124,11 +128,11 @@ def main():
     rows = []
 
     for batch in range(n_batches):
-        obs, _ = wrapped.get_observations() if batch == 0 else (wrapped.reset()[0], None)
-        if batch == 0:
-            obs, _ = wrapped.reset()
+        reset_out = wrapped.reset()
+        obs = reset_out[0] if isinstance(reset_out, tuple) else reset_out
+        if isinstance(obs, dict):
+            obs = obs.get("policy", next(iter(obs.values())))
         start_xy = u.robot.data.root_pos_w[:, :2].clone()
-        heading0 = u.robot.data.root_pos_w[:, :2].clone()  # placeholder, replaced below
         yaw0 = u._compute_yaw().clone() if hasattr(u, "_compute_yaw") else torch.zeros(u.num_envs, device=u.device)
         alive = torch.ones(u.num_envs, dtype=torch.bool, device=u.device)
         steps = torch.zeros(u.num_envs, device=u.device)
@@ -136,9 +140,14 @@ def main():
         end_xy = start_xy.clone()
 
         with torch.inference_mode():
-            for _ in range(max_len):
+            for t in range(max_len):
+                if t % 250 == 0:
+                    print(f"[eval]   batch {batch + 1}: step {t}/{max_len}, {int(alive.sum())} alive", flush=True)
                 actions = policy(obs)
-                obs, _, dones, _ = wrapped.step(actions)
+                step_out = wrapped.step(actions)
+                obs, dones = step_out[0], step_out[2]
+                if isinstance(obs, dict):
+                    obs = obs.get("policy", next(iter(obs.values())))
                 roll, pitch = _euler_rp(u.robot.data.root_quat_w)
                 roll_acc.append(torch.where(alive, roll, torch.zeros_like(roll)))
                 pitch_acc.append(torch.where(alive, pitch, torch.zeros_like(pitch)))

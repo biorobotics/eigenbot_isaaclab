@@ -1,78 +1,132 @@
-# Eigenbot IsaacLab Extension
+# The `eigenbot` Isaac Lab extension
 
-This is an external extension for IsaacLab to add the EigenBot robot system and training. All modifications to code should generally stay within this extension.
+This folder is the whole project. Everything else in the repository is either
+upstream Isaac Lab (`isaaclab/`), legacy ROS packages for the physical robot
+(`eigenbot_v2/`), or documentation.
 
-As with the original IsaacGym implementation, we use `rsl_rl` as the library for RL and robotic learning, a direct workflow to easily port from `legged_gym`, and single-agent control, since EigenBot currently does not need to itneract with other robots.
+> **Start with the [repository README](../../README.md)** — setup, how to run
+> training, the tuning knob index and the docs index all live there. This file
+> covers only what is specific to the extension's internals.
 
-Once full porting is complete, RL is stress tested, and ROS migration is finished, we can conduct another port to a manager-based workflow to improve modularity, but this is not needed currently.
+It is an **external Isaac Lab extension**: it is bind-mounted into the container
+at `/workspace/eigenbot` by `isaaclab/docker/eigenbot.yaml` and installed with
+`pip install -e source/eigenbot`. All modifications should stay inside it — the
+upstream `isaaclab/` checkout is not ours to edit.
 
-## Overview
-Here is an overview of the extension structure.
+We use `rsl_rl` for RL, the **direct** workflow (not manager-based) to keep the
+port from `legged_gym` close to line-for-line, and single-agent control.
+A port to the manager-based workflow is reasonable once RL is settled and the ROS
+migration is done, but it is a rewrite of the RL side, not the sim side.
+
+---
+
+## Layout
 
 ```
-eigenbot/
+eigenbot/eigenbot/
 ├── scripts/
-│   ├── list_envs.py
-│   ├── random_agent.py
-│   ├── zero_agent.py
+│   ├── list_envs.py            print the registered tasks
+│   ├── zero_agent.py           zero action — the first thing to run after any change
+│   ├── random_agent.py         random action smoke test
+│   ├── diag_gait.py            measure the open-loop gait in numbers
+│   ├── eval_compare.py         head-to-head evaluation, per terrain type, CSV out
+│   ├── test_cpg.py             9 offline CPG checks (no Isaac Sim, no GPU)
+│   ├── boa_compat.sh           machine-local API patches for the lab PC — never commit its output
+│   ├── ars/train.py            Augmented Random Search trainer (gradient-free)
 │   └── rsl_rl/
-│       ├── cli_args.py
-│       ├── play.py
-│       └── train.py
-└── source/
+│       ├── cli_args.py         --resume / --load_run / --checkpoint / --logger ...
+│       ├── train.py            PPO training entry point
+│       └── play.py             replay a checkpoint; exports policy.pt and policy.onnx
+└── source/eigenbot/
+    ├── setup.py                packaging metadata (how pip installs the extension)
+    ├── config/extension.toml   Omniverse Kit extension manifest
     └── eigenbot/
-        ├── setup.py
-        └── eigenbot/
-            ├── ui_extension_example.py
-            ├── assets/
-            │   ├── eigenbot.py
-            │   └── eigenbot/
-            │       ├── urdf/
-            │       │   └── eigenbot_hexapod.urdf
-            │       └── meshes/
-            │           └── *.stl
-            └── tasks/
-                └── direct/
-                    └── eigenbot/
-                        ├── eigenbot_env.py
-                        ├── eigenbot_env_cfg.py
-                        └── agents/
-                            └── rsl_rl_ppo_cfg.py
+        ├── ui_extension_example.py     Kit UI example, unused
+        ├── assets/
+        │   ├── eigenbot.py             EIGENBOT_CFG: URDF path, PD gains, torque limit, default pose
+        │   └── eigenbot/
+        │       ├── urdf/eigenbot_hexapod.urdf
+        │       └── meshes/*.stl, *.png
+        └── tasks/direct/eigenbot/
+            ├── __init__.py                  gym.register for both tasks
+            ├── eigenbot_env.py              EigenbotEnv — observations, rewards, resets, curriculum
+            ├── eigenbot_env_cfg.py          the main config, shared by both tasks
+            ├── cpg.py                       HopfCPG — oscillators and joint mapping
+            ├── eigenbot_cpg_env.py          EigenbotCPGEnv — 7-D action → 18 joints
+            ├── eigenbot_cpg_env_cfg.py      CPGCfg — every gait tunable
+            └── agents/
+                ├── rsl_rl_ppo_cfg.py        PPO hyperparameters, 18-D baseline
+                └── rsl_rl_cpg_ppo_cfg.py    PPO hyperparameters, 7-D CPG
 ```
 
-## Specifics
+---
 
-### Assets
-The `source/eigenbot/eigenbot/assets` folder will contain all the model files, URDFs, and supporting USD-style files necessary for rendering the EigenBot. The `eigenbot/meshes` subfolder should contain all `.stl, .obj, .png` files needed for meshes and textures, and the `eigenbot/urdf` file should contain the EigenBot URDF file.
+## The four layers
 
-#### Modifying
-When modifying assets, add additional mesh, texture, and URDF files to the corresponding folders, being careful that naming is consitent and all URDF dependencies are satisfied and pathed correctly. Then, modify the simulation core to create compatability.
+### Assets — `source/eigenbot/eigenbot/assets/`
 
-### Simulation Core
-The simulation core is contained within two main files.
-- `source/eigenbot/eigenbot/assets/eigenbot.py` contains the physics properties, joint properties, actuators, and initialization pose for the EigenBot as an `ArticulationCfg`.
-- `source/eigenbot/tasks/direct/eigenbot/eigenbot_env_cfg.py` contains the environment properties, consisting of environment rewards, physics, sensing, interactions, and terrain subconfigs, wrapped within the `EigenbotEnvCfg` main config.
+`eigenbot.py` defines `EIGENBOT_CFG`: URDF path and conversion settings, rigid
+body and articulation properties, the default standing pose, and the actuator
+model (stiffness 20, damping 0.5, effort limit 8 N·m).
 
-#### Modifying
-It is relatively easily to modify environment properties or add/remove properties by modifying the configuration files and treating any downstream effects.
+`eigenbot/meshes/` holds every `.stl` / `.png` the URDF references;
+`eigenbot/urdf/` holds the URDF itself. When adding assets, keep naming
+consistent and make sure every URDF dependency resolves — the URDF is converted
+to USD on each run (`force_usd_conversion=True`), so a missing mesh shows up as a
+silent geometry hole rather than an error.
 
-### RL Core
-The reinforcement leearning core is contained within two main files.
-- `source/eigenbot/tasks/direct/eigenbot/eigenbot_env.py`contains the `EigenbotEnv` class which holds all the rewards functions, computations, actions, reset, etc. functionality for an RL environment that will train the EigenBot. This is the most complex file, but think about it as just serving an RL environment.
-- `source/eigenbot/tasks/direct/eigenbot/agents/rsl_rl_ppo_cfg.py` configures the PPO training policy from RSL_RL to train the robot.
+> ⚠️ The PD gains and torque limit mirror the physical bendy modules. Do not
+> raise them to fix a gait — see the [tuning guide](../../docs/tuning.md).
 
-#### Modifying
-For changing the training hyperparameters, this can be easily done by changing the PPO training config. For changing the RL rewards themselves, more complex programming needs to be done to modify the `EigenbotEnv` class.
+### Simulation core — `eigenbot_env_cfg.py`
 
-### RL Scripting
-The `scripts/rsl_rl` folder contains scripts to train, play, and process command line arguments for RL policy training. The `scripts`folder itself also has scripts to list the registered environments in the EigenBot extension and run smoke tests with a random action agent or a no-action agent to test gravity and environment function.
+Rewards, commands, terrain, domain randomization, noise, normalization, the
+depth-camera config, observation-size constants, sim dt and episode length. This
+config is **shared by both tasks**, which is what keeps the CPG-vs-PPO comparison
+honest — and means an edit here affects both.
 
-### Extras
-The `source/eigenbot/setup.py` file is a metadata file to indicate how the EigenBot extension should be bundled and installed as a Python package in the Docker image. The `source/eigenbot/eigenbot/ui_extension_example.py` is an example for how Omniverse Kit UI extensions should be made to be added to the IsaacSim interface.
+### RL core — `eigenbot_env.py`
 
-## Changes and More Work
-- **Terrain curriculum not yet implemented**. The current env uses flat ground. Height observations return constant values.
-- **Physical domain randomization (friction/mass/COM applied to physics)** requires explicit torque control mode — currently values are stored for privileged observations only.
-- **Depth Camera**. This sensor was omitted from the current port for simplicity. It needs to be added back using a `CameraCfg` sensor and a RSL_RL policy class to support sim and training.
-- **Action Delay**. This was a disabled by default feature in the IsaacGym implementation, which simulates latency by adding action frames to a history buffer. Currently only the observation history buffer is ported, but the action history buffer is not.
-- **Scan/privileged encoders**. Original IsaacGym uses specialized `scan_encoder` and `priv_encoder` networks. The current config uses a standard MLP. A custom RSL_RL policy class would be needed for the full encoder architecture. This is however, an RL training rewrite, not a sim part.
+`EigenbotEnv` builds the 974-dim observation, computes every reward term, handles
+termination, resets, the terrain curriculum and domain randomization. It is the
+most complex file here (~1000 lines), but it is just an RL environment.
+
+Adding a reward term does **not** require understanding the whole file: add a
+field to `RewardScalesCfg` and a `_reward_<field>(self)` method returning a
+per-env tensor, and `_prepare_reward_functions` wires it up.
+
+### CPG layer — `cpg.py`, `eigenbot_cpg_env.py`, `eigenbot_cpg_env_cfg.py`
+
+`EigenbotCPGEnv` subclasses `EigenbotEnv` and overrides four methods to drive the
+robot from a 7-D action. Everything else is inherited. Design notes, the
+joint-mapping derivation and the geometry facts that must be right:
+[`docs/cpg.md`](../../docs/cpg.md).
+
+---
+
+## Status of the port
+
+Ported and working: terrain generator with a row-wise difficulty curriculum,
+`RayCaster` height scan (12×11), physical domain randomization (friction, COM,
+motor gains, pushes) applied to PhysX, observation history, depth camera
+(implemented, `use_camera = False` by default).
+
+Still open:
+
+- **Action delay** — the history buffer and config exist; `action_delay` is
+  `False`. Enabling it costs only training time.
+- **Base mass randomization** — implemented, currently off.
+- **Scan / privileged encoders** — the original Isaac Gym implementation used
+  dedicated `scan_encoder` and `priv_encoder` networks; this uses a flat MLP over
+  the full observation. Reproducing them needs a custom rsl-rl policy class. This
+  is an RL-training change, not a sim change.
+- **Per-term reward logging** — `episode_sums` is accumulated but never pushed
+  into `extras["episode"]`, so reward composition is invisible in TensorBoard.
+  The highest-value small change in the repo.
+- **Observation noise** — `NoiseCfg` / `add_noise` / `noise_scales` are defined
+  but never read; no noise reaches the observation.
+- **Foot slot ordering** — `find_bodies(FEET_BODIES)` is called without
+  `preserve_order=True`, so `rule_1` / `rule_3` may not be grouping the legs they
+  claim to. See [`docs/architecture.md`](../../docs/architecture.md) §5.
+- **Depth camera consumers** — the buffer is filled but nothing reads it yet. It
+  is the hook for the perception side of the project.

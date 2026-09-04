@@ -18,9 +18,16 @@ head to head:
 | `Template-Eigenbot-Direct-v0` | End-to-end PPO — the policy writes all 18 joint targets | 18 | `rsl_rl_ppo_cfg.py` |
 | `Template-Eigenbot-CPG-Direct-v0` | CPG+RL — a Hopf central pattern generator produces a tripod gait; the policy only *modulates* it (1 turn bias + 6 per-leg gains) | 7 (25 in residual mode) | `rsl_rl_cpg_ppo_cfg.py` |
 
-Both tasks share the **same 974-dim observation, the same reward function, the
+These two share the **same 974-dim observation, the same reward function, the
 same terrain and the same domain randomization**, so a difference in the numbers
 is a difference in method — that comparison is the point of the project.
+
+A third task, `Template-Eigenbot-MyCfg-Direct-v0`, runs the same 18-DOF env
+against an alternative reward config (`eigenbot_env_mycfg.py`, which weights leg
+lifting differently). It is **not** part of the head-to-head — its rewards
+differ, so its totals are not comparable with the other two — and it shares the
+`eigenbot_locomotion` log folder, so pass `--run_name mycfg` to tell its runs
+apart.
 
 `Template-Eigenbot-Direct-v0` is the default throughout this README: unless a
 command says otherwise it targets the baseline, and you swap in
@@ -143,6 +150,7 @@ eigenbot_isaaclab/
 |---|---|---|
 | `TASK/eigenbot_env_cfg.py` | **The main config.** Rewards, commands, terrain, domain randomization, noise, observation sizes, sim dt, episode length. Shared by *both* tasks. | Tuning rewards, terrain, curriculum, DR — the most common edit |
 | `TASK/eigenbot_env.py` | `EigenbotEnv` — the RL environment. Observation assembly, reward *functions*, termination, resets, terrain curriculum, domain-randomization application. ~1000 lines. | Adding/changing a reward function, changing observations |
+| `TASK/eigenbot_env_mycfg.py` | Alternative reward config used only by `Template-Eigenbot-MyCfg-Direct-v0`. Same shape as `eigenbot_env_cfg.py`, different reward weights | Working on that variant. Editing it does **not** affect the baseline or CPG tasks |
 | `TASK/eigenbot_cpg_env_cfg.py` | `CPGCfg` — every CPG tunable (frequency, amplitudes, gains, joint mapping, per-leg lift scales) + `EigenbotCPGEnvCfg` | Tuning the gait |
 | `TASK/cpg.py` | `HopfCPG` — the oscillators, coupling, action decode, joint mapping | Changing the *structure* of the gait generator |
 | `TASK/eigenbot_cpg_env.py` | `EigenbotCPGEnv` — the ~120-line subclass that drives joints from a 7-D action | Changing how CPG output reaches the joints |

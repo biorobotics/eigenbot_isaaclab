@@ -82,7 +82,7 @@ def main():
     from isaaclab_tasks.utils import load_cfg_from_registry
     from rsl_rl.runners import OnPolicyRunner
 
-    env_cfg = parse_env_cfg(args_cli.task, num_envs=args_cli.num_envs)
+    env_cfg = parse_env_cfg(args_cli.task, device=args_cli.device, num_envs=args_cli.num_envs)
     env_cfg.seed = args_cli.seed
     if hasattr(env_cfg, "depth_camera"):
         env_cfg.depth_camera.use_camera = False
@@ -107,7 +107,7 @@ def main():
     wrapped = RslRlVecEnvWrapper(env)
     print("[eval] wrapped; building runner...", flush=True)
 
-    runner = OnPolicyRunner(wrapped, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
+    runner = OnPolicyRunner(wrapped, agent_cfg.to_dict(), log_dir=None, device=args_cli.device)
     print("[eval] runner built; loading checkpoint...", flush=True)
     runner.load(resume_path)
     policy = runner.get_inference_policy(device=u.device)

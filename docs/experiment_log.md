@@ -250,27 +250,25 @@ python scripts/eval_compare.py --task Template-Eigenbot-Direct-v0 --episodes 40 
 
 ## Ideas and open threads, roughly in priority order
 
-1. **Run the `eval_compare.py` head-to-head.** Nothing else is blocked on it, and
-   it is the deliverable.
-2. **Frequency as an action** (7 → 8 dims, ω scale ~0.6–2.0×). Directly addresses
+1. **Frequency as an action** (7 → 8 dims, ω scale ~0.6–2.0×). Directly addresses
    the 0.083 m/s speed ceiling, lets RL trade speed against clearance per
    terrain, and matches Bellegarda & Ijspeert. Biggest upside available.
-3. **Per-term reward logging** (`extras["episode"]["rew_*"]`) so reward
+2. **Per-term reward logging** (`extras["episode"]["rew_*"]`) so reward
    composition is visible in TensorBoard.
-4. **Commit the 1.0 Hz frequency** — the biggest gait win is uncommitted.
-5. **Entropy / std control** — `entropy_coef` below 0.002, or an std ceiling, to
+3. **Commit the 1.0 Hz frequency** — the biggest gait win is uncommitted.
+4. **Entropy / std control** — `entropy_coef` below 0.002, or an std ceiling, to
    stop the noise blow-up.
-6. **Residual mode** as the flexibility hedge: `cpg.use_residual = True` (action
+5. **Residual mode** as the flexibility hedge: `cpg.use_residual = True` (action
    space 25). Prefer the PPO pipeline there.
-7. **ARS trainer** (`scripts/ars/train.py`) — the paper's gradient-free
+6. **ARS trainer** (`scripts/ars/train.py`) — the paper's gradient-free
    optimiser, implemented but never run; needs no rsl-rl.
-8. **Perception hook** — the six per-leg `b` gains are the intended interface for
+7. **Perception hook** — the six per-leg `b` gains are the intended interface for
    terrain features from the vision side of the project.
-9. **`base_height_target = 0.25` is inert** — no base-height reward term exists;
+8. **`base_height_target = 0.25` is inert** — no base-height reward term exists;
    only `diag_gait.py` reads the field. Wire one up with a reachable target, or
    delete it.
-10. **ROS 2 policy inference node** — the remaining piece before deployment. A
-    ROS 2 Humble Docker environment with all six nodes is already up on boa.
+9. **ROS 2 policy inference node** — the remaining piece before deployment. A
+   ROS 2 Humble Docker environment with all six nodes is already up on boa.
 
 ---
 
@@ -311,6 +309,26 @@ roughly by how much they could distort a result.
 9. **Two wrong source comments:** `CPGCfg.lift_scales` says the rear/front
    attachment difference is in `x` (it is `z`; x is −0.041 for every leg), and
    `cpg.py`'s docstring calls the coupling a "ring" when it is all-to-all.
+
+### Fixed
+
+**`eval_compare.py` ignored `--device` (fixed 2026-09-04).** It called
+`parse_env_cfg(task, num_envs=...)` with no `device=`, so the env config
+defaulted to `cuda:0` while the Isaac Sim app launched on whatever `--device`
+specified, and the runner took `agent_cfg.device` (also `cuda:0`). With
+`--device cuda:1` the process wedged inside `EigenbotEnv._init_buffers` →
+`_apply_domain_randomization` — the first code to touch `robot.root_physx_view`
+with torch tensors — printing nothing after
+`[INFO]: Completed setting up the environment...`. **This was the silent
+pre-rollout hang recorded above**; the progress prints added earlier are what
+localised it. `train.py` and `play.py` were unaffected because they pass
+`device=args_cli.device` into `parse_env_cfg` and let `cli_args` set
+`agent_cfg.device`. Both call sites in `eval_compare.py` now use
+`args_cli.device`.
+
+Symptoms to recognise if it ever comes back: `Environment device : cuda:0` in
+the log despite a different `--device`, the GPU table printed twice, and
+`[Error] DriverShaderCacheManager::init() called without a shutdown()!`
 
 ---
 

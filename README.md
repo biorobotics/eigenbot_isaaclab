@@ -26,10 +26,10 @@ is a difference in method — that comparison is the point of the project.
 command says otherwise it targets the baseline, and you swap in
 `Template-Eigenbot-CPG-Direct-v0` to run the same thing on the CPG variant.
 
-> **Current status (2026-09):** both policies train end to end and walk. The
-> first 10k-vs-10k comparison tied on reward but revealed a reward exploit (see
-> [Results](#results-so-far)); rewards were re-weighted and a second comparison
-> was launched. The `eval_compare.py` head-to-head has not been run yet.
+> **Current status (2026-09):** both policies train end to end and walk on mixed
+> terrain. Dated run results, the reasoning behind the current reward weights and
+> gait parameters, and everything already tried live in
+> [`docs/experiment_log.md`](docs/experiment_log.md).
 
 ---
 
@@ -415,7 +415,11 @@ picked up automatically** (`_prepare_reward_functions` does the dispatch).
 
 ⚠️ `only_positive_rewards = True` clips the total to ≥0 *before* the termination
 penalty. Combined with generous survival terms this is exactly how a policy
-learns to bank reward without travelling — see [Results](#results-so-far).
+learns to bank reward without travelling. This is not hypothetical: it is how the
+18-DOF baseline once scored the same reward as a walking CPG policy while
+vibrating its legs in place, which is why `tracking_goal_vel` is 10.0 and
+`lin_vel_x` floors at 0.2. See
+[`docs/experiment_log.md`](docs/experiment_log.md).
 
 Shaping parameters live next door in `RewardsCfg`: `tracking_sigma`,
 `soft_dof_pos_limit`, `base_height_target`, `contact_tresh`, `stumble_tresh`,
@@ -701,49 +705,7 @@ bash scripts/boa_compat.sh
 | Import still points at the old clone | `pip install -e source/eigenbot` re-points the `eigenbot` package only for **new** processes. Launch each run from the clone you intend it to use |
 | Everything looks broken in a screenshot | A tripod gait always has three legs airborne. Judge motion, not stills |
 | `.git` corruption, vanishing `.git/config`, stale `index.lock` | OneDrive. Keep working clones **outside** OneDrive; sync through GitHub |
-| Reward is high but the robot isn't going anywhere | Believe the video, not the number. See [Results](#results-so-far) |
-
-</details>
-
-## Results so far
-
-<details>
-<summary>The measured gait, the first comparison, and the reward exploit it exposed</summary>
-
-Full history, every fix and why: [`docs/experiment_log.md`](docs/experiment_log.md).
-
-### Measured open-loop CPG gait (flat ground, zero action, 1.0 Hz)
-
-Per-leg clearance 1.3 / 2.6 / 2.7 / 2.0 / 2.2 / 2.6 cm, stance 64–78 %, travel
-0.50 m in 6 s (**0.083 m/s**), lateral drift ~0.00 m, body height ~11.5 cm — all
-six legs clearing and the body moving.
-
-### First comparison (2026-08-01, 10k iterations, 2048 envs, seed 42, mixed terrain)
-
-Final mean reward **95.42 (CPG) vs 95.19 (PPO)** — a statistical tie, both with
-episode length pinned at the maximum. But `play.py` showed they were not doing
-the same thing at all: **the CPG genuinely locomoted, while the 18-DOF PPO
-baseline vibrated its legs in place with no forward progress.**
-
-The reward function was not discriminating locomotion. With
-`tracking_goal_vel = 4.0` alongside generous survival terms and
-`only_positive_rewards = True`, staying upright and cycling the legs banked most
-of the available reward without travelling.
-
-**This is itself the most interesting result so far: the CPG's structural gait
-prior made it immune to a reward exploit that the unconstrained 18-DOF policy
-fell straight into.**
-
-### Second comparison (launched 2026-08-08)
-
-`tracking_goal_vel` 4.0 → 10.0, `lin_vel_x` (0.0, 0.5) → (0.2, 0.4), CPG `b_max`
-1.5 → 1.25 plus a joint-limit clamp. Both tasks share the reward changes, so the
-comparison stays fair. **Expect lower absolute rewards than 95** — the scale
-changed and standing no longer pays. The signal to look for is whether a *gap*
-opens.
-
-**Not done yet:** `eval_compare.py` has not been run on either policy. That is
-the next step.
+| Reward is high but the robot isn't going anywhere | Believe the video, not the number — two policies once scored the same while only one walked. See [`docs/experiment_log.md`](docs/experiment_log.md) |
 
 </details>
 
@@ -754,50 +716,55 @@ the next step.
 
 Roughly in priority order:
 
-1. **Run `eval_compare.py` on both second-comparison policies.** The head-to-head
-   numbers are the deliverable and nothing else is blocked on them.
-2. **Per-term reward logging** (`extras["episode"]["rew_*"]`) so reward
+1. **Per-term reward logging** (`extras["episode"]["rew_*"]`) so reward
    composition shows up in TensorBoard. Cheap; would have saved two 10k runs.
-3. **Commit the 1.0 Hz gait frequency** — the biggest single gait improvement
+2. **Commit the 1.0 Hz gait frequency** — the biggest single gait improvement
    still only exists in the lab PC's working tree.
-4. **Frequency as an action** (7 → 8 dims, an ω scale of ~0.6–2.0×). Addresses
+3. **Frequency as an action** (7 → 8 dims, an ω scale of ~0.6–2.0×). Addresses
    the 0.083 m/s speed ceiling directly; stride has little room to grow because
    the front and rear swing joints start at ±π/4 against a ±π/2 limit (the mid
    pair starts at 0), so frequency is the practical lever. Matches Bellegarda &
    Ijspeert's CPG-RL.
-5. **Entropy / std control** — `entropy_coef` below 0.002 or an std ceiling; the
+4. **Entropy / std control** — `entropy_coef` below 0.002 or an std ceiling; the
    action noise std reached ~10–13 by the end of both first-comparison runs.
-6. **Residual mode** (`cpg.use_residual = True`, action space 25) as the
+5. **Residual mode** (`cpg.use_residual = True`, action space 25) as the
    flexibility hedge.
-7. **ARS trainer** (`scripts/ars/train.py`) — the paper's gradient-free
+6. **ARS trainer** (`scripts/ars/train.py`) — the paper's gradient-free
    optimizer, implemented but never run.
-8. **Perception hook** — the six per-leg `b` gains are the intended interface for
+7. **Perception hook** — the six per-leg `b` gains are the intended interface for
    terrain features from the vision side of the project.
-9. **`base_height_target = 0.25` is inert and misleading.** There is no
+8. **`base_height_target = 0.25` is inert and misleading.** There is no
    base-height reward term at all — the field is read only by `diag_gait.py`,
    for a printed note — and the value is unreachable anyway (the robot rides
    ~11.5 cm). Wire up a height term with a reachable target, or delete the field.
-10. **ROS 2 policy inference node** — the remaining piece before deployment to the
-    physical robot.
+9. **ROS 2 policy inference node** — the remaining piece before deployment to the
+   physical robot.
 
 ### Bugs found in the 2026-09-04 documentation pass
 
-11. **Foot slots are not order-pinned.** `find_bodies(FEET_BODIES)` is called
+10. **Foot slots are not order-pinned.** `find_bodies(FEET_BODIES)` is called
     *without* `preserve_order=True`, so the six contact slots come back in
     articulation order, not `FEET_BODIES` order. `_reward_rule_1` and
     `_reward_rule_3` treat slots `[0,3]` as front, `[1,4]` as middle and `[2,5]`
     as hind, which does not match the URDF (foot M25 belongs to a mid leg, M26 to
     a rear leg). **The gait-rule rewards are probably not rewarding the
     coordination they claim to.** Check before any writeup leans on them.
-12. **Observation noise is never applied** — `NoiseCfg` / `add_noise` /
+11. **Observation noise is never applied** — `NoiseCfg` / `add_noise` /
     `noise_scales` are defined and unread. Sim-to-real relevant.
-13. **`scripts/test_cpg.py`'s stub config has drifted from `CPGCfg`**
+12. **`scripts/test_cpg.py`'s stub config has drifted from `CPGCfg`**
     (`b_max = 1.5` vs `1.25`, `lift_scales[0] = 1.35` vs `1.7`), so the offline
     checks no longer exercise the committed values.
-14. **Other dead config:** the `ang_vel_yaw` command range is never sampled
+13. **Other dead config:** the `ang_vel_yaw` command range is never sampled
     (`commands[:, 2]` is derived from heading error every step);
     `soft_dof_vel_limit`, `soft_torque_limit`, `max_contact_force` and
     `stumble_tresh` are unread.
+
+**Fixed 2026-09-04 —** `eval_compare.py` never passed `--device` through to
+`parse_env_cfg` or the runner, so the env was built on `cuda:0` while the Isaac
+Sim app ran on whatever `--device` said. The mismatch wedged the process inside
+`_init_buffers` → `_apply_domain_randomization`, the first code to touch
+`root_physx_view` with torch tensors, with no error — this was the silent hang
+the log had recorded once before. Both call sites now use `args_cli.device`.
 
 </details>
 

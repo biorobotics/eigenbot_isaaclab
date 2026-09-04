@@ -1,1 +1,16 @@
 eigenbot_RL/
+
+# Training output — checkpoints and TensorBoard event files, often many GB.
+# Never commit these; share checkpoints out of band.
+logs/
+outputs/
+
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# OS cruft
+.DS_Store
+Thumbs.db

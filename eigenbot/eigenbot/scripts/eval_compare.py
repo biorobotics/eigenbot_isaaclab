@@ -113,14 +113,36 @@ def main():
     policy = runner.get_inference_policy(device=u.device)
     print("[eval] policy ready; starting rollouts", flush=True)
 
-    # Which sub-terrain each env sits on. TerrainImporter lays sub-terrains out
-    # along columns, so column index -> sub-terrain type.
+    # Which sub-terrain each env sits on. `terrain_types` holds the COLUMN index
+    # (0..num_cols-1), NOT the sub-terrain index: TerrainGenerator spreads the
+    # sub-terrains across columns by proportion, so 4 sub-terrains over 20 columns
+    # are not the same number. Clamping the column index to 0..3 (what this used
+    # to do) put every column above 3 in the last bucket and made the per-terrain
+    # breakdown meaningless. Rebuild the map the way TerrainGenerator does.
     terrain = getattr(u, "_terrain", None)
     types = getattr(terrain, "terrain_types", None) if terrain is not None else None
-    if types is not None:
-        env_terrain = types.to(u.device).long().clamp(0, len(TERRAIN_NAMES) - 1)
+    gen_cfg = getattr(u.cfg.terrain, "terrain_generator", None)
+    terrain_names = list(TERRAIN_NAMES)
+    if types is not None and gen_cfg is not None:
+        terrain_names = list(gen_cfg.sub_terrains.keys())
+        props = [gen_cfg.sub_terrains[n].proportion for n in terrain_names]
+        total = float(sum(props))
+        cumsum, acc = [], 0.0
+        for pr in props:
+            acc += pr / total
+            cumsum.append(acc)
+        num_cols = int(gen_cfg.num_cols)
+        col_to_sub = [
+            next(i for i, c in enumerate(cumsum) if col / num_cols + 0.001 < c)
+            for col in range(num_cols)
+        ]
+        lut = torch.tensor(col_to_sub, device=u.device, dtype=torch.long)
+        env_terrain = lut[types.to(u.device).long().clamp(0, num_cols - 1)]
+        spans = {n: col_to_sub.count(i) for i, n in enumerate(terrain_names)}
+        print(f"[eval] columns per sub-terrain: {spans}", flush=True)
     else:
         env_terrain = torch.zeros(u.num_envs, dtype=torch.long, device=u.device)
+        terrain_names = ["all"]
         print("[warn] no terrain_types available (flat plane?) — reporting a single group")
 
     max_len = int(u.max_episode_length)
@@ -148,12 +170,20 @@ def main():
                 obs, dones = step_out[0], step_out[2]
                 if isinstance(obs, dict):
                     obs = obs.get("policy", next(iter(obs.values())))
+                # An env that finishes on THIS step has already been reset by
+                # Isaac Lab before step() returned, so root_pos_w now holds its
+                # respawn position — and the terrain curriculum may have shifted
+                # its origin by a whole 8 m patch on the way. Sampling it here
+                # made every episode report the origin shift (a suspiciously
+                # round +/-8.00 m) instead of the distance actually travelled.
+                # Only sample envs that are still running.
+                still = alive & ~dones.bool()
                 roll, pitch = _euler_rp(u.robot.data.root_quat_w)
-                roll_acc.append(torch.where(alive, roll, torch.zeros_like(roll)))
-                pitch_acc.append(torch.where(alive, pitch, torch.zeros_like(pitch)))
+                roll_acc.append(torch.where(still, roll, torch.zeros_like(roll)))
+                pitch_acc.append(torch.where(still, pitch, torch.zeros_like(pitch)))
                 steps += alive.float()
-                end_xy = torch.where(alive.unsqueeze(1), u.robot.data.root_pos_w[:, :2], end_xy)
-                alive = alive & ~dones.bool()
+                end_xy = torch.where(still.unsqueeze(1), u.robot.data.root_pos_w[:, :2], end_xy)
+                alive = still
                 if not alive.any():
                     break
 
@@ -172,7 +202,7 @@ def main():
             rows.append(
                 {
                     "episode": batch * u.num_envs + i,
-                    "terrain": TERRAIN_NAMES[env_terrain[i].item()] if types is not None else "all",
+                    "terrain": terrain_names[env_terrain[i].item()],
                     "forward_m": round(forward[i].item(), 3),
                     "lateral_m": round(lateral[i].item(), 3),
                     "speed_mps": round((forward[i] / duration[i].clamp_min(1e-6)).item(), 3),

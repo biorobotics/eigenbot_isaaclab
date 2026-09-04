@@ -315,7 +315,9 @@ multiplied by policy dt) and invalidates comparisons with earlier runs.
 
 ## 9. Debugging order
 
-When the robot does something wrong, work down this list before touching PPO:
+When the robot does something wrong, work down this list before touching PPO.
+Steps 1–3 are specific to the **CPG variant**; on the baseline task start at
+step 4.
 
 1. **`python scripts/test_cpg.py`** — 9 offline checks, no GPU, catches sign and
    phase errors in seconds.

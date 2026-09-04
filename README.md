@@ -9,8 +9,9 @@ modules (`M1..M18`). Everything project-specific lives in one Isaac Lab
 extension at [`eigenbot/eigenbot/`](eigenbot/eigenbot) — the `isaaclab/` folder
 is an unmodified upstream checkout used only for the Docker build.
 
-**Two locomotion policies are registered, and they are designed to be compared
-head to head:**
+**The main line is end-to-end PPO.** A CPG+RL variant is registered alongside it
+as the experimental comparison, built on the same task so the two can be measured
+head to head:
 
 | Task ID | Approach | Action space | Agent config |
 |---|---|---|---|
@@ -20,6 +21,10 @@ head to head:**
 Both tasks share the **same 974-dim observation, the same reward function, the
 same terrain and the same domain randomization**, so a difference in the numbers
 is a difference in method — that comparison is the point of the project.
+
+`Template-Eigenbot-Direct-v0` is the default throughout this README: unless a
+command says otherwise it targets the baseline, and you swap in
+`Template-Eigenbot-CPG-Direct-v0` to run the same thing on the CPG variant.
 
 > **Current status (2026-09):** both policies train end to end and walk. The
 > first 10k-vs-10k comparison tied on reward but revealed a reward exploit (see
@@ -88,19 +93,22 @@ cd /workspace/eigenbot && pip install -e source/eigenbot
 python scripts/zero_agent.py --task Template-Eigenbot-Direct-v0 --num_envs 1
 ```
 
-**6. See the engineered gait with no policy at all** (zero action on the CPG task
-means θ=0 and b at the midpoint of `[b_min, b_max]` = 0.875 on every leg, i.e.
-the pure open-loop tripod):
+**6. Optional — see the CPG variant's engineered gait with no policy at all**
+(zero action on the CPG task means θ=0 and b at the midpoint of
+`[b_min, b_max]` = 0.875 on every leg, i.e. the pure open-loop tripod):
 
 ```bash
 python scripts/zero_agent.py --task Template-Eigenbot-CPG-Direct-v0 --num_envs 1
 ```
 
-**7. Train:**
+**7. Train the baseline:**
 
 ```bash
-python scripts/rsl_rl/train.py --task Template-Eigenbot-CPG-Direct-v0 --num_envs 2048 --headless
+python scripts/rsl_rl/train.py --task Template-Eigenbot-Direct-v0 --num_envs 2048 --headless
 ```
+
+Swap the task for `Template-Eigenbot-CPG-Direct-v0` to train the CPG variant
+instead.
 
 If the viewer is black or the robot is invisible, see
 [Troubleshooting](#troubleshooting).
@@ -238,15 +246,15 @@ Isaac Sim ignores `Ctrl+C`; kill from another terminal with
 attaching:
 
 ```bash
-tmux new -d -s cpg
+tmux new -d -s ppo
 ```
 
 ```bash
-tmux send-keys -t cpg "cd /workspace/eigenbot && python scripts/rsl_rl/train.py --task Template-Eigenbot-CPG-Direct-v0 --num_envs 2048 --max_iterations 10000 --seed 42 --headless" Enter
+tmux send-keys -t ppo "cd /workspace/eigenbot && python scripts/rsl_rl/train.py --task Template-Eigenbot-Direct-v0 --num_envs 2048 --max_iterations 10000 --seed 42 --headless" Enter
 ```
 
 ```bash
-tmux capture-pane -pt cpg | tail -20
+tmux capture-pane -pt ppo | tail -20
 ```
 
 </details>
@@ -256,7 +264,13 @@ tmux capture-pane -pt cpg | tail -20
 <details>
 <summary>play.py, zero_agent, the gait measurer, and the offline CPG tests</summary>
 
-**Replay the newest checkpoint of a task:**
+**Replay the newest checkpoint of the baseline:**
+
+```bash
+python scripts/rsl_rl/play.py --task Template-Eigenbot-Direct-v0 --num_envs 32
+```
+
+**…and of the CPG variant:**
 
 ```bash
 python scripts/rsl_rl/play.py --task Template-Eigenbot-CPG-Direct-v0 --num_envs 32
@@ -265,15 +279,15 @@ python scripts/rsl_rl/play.py --task Template-Eigenbot-CPG-Direct-v0 --num_envs 
 **Replay a specific checkpoint:**
 
 ```bash
-python scripts/rsl_rl/play.py --task Template-Eigenbot-CPG-Direct-v0 --checkpoint logs/rsl_rl/eigenbot_cpg_locomotion/2026-08-01_01-31-28/model_9999.pt --num_envs 8
+python scripts/rsl_rl/play.py --task Template-Eigenbot-Direct-v0 --checkpoint logs/rsl_rl/eigenbot_locomotion/2026-08-01_07-57-24/model_9999.pt --num_envs 8
 ```
 
 `play.py` also writes `exported/policy.pt` (TorchScript) and
 `exported/policy.onnx` next to the checkpoint — those are what a ROS 2 inference
 node on the physical robot would load.
 
-**Look at the gait with no policy** (θ=0 and b=0.875, the midpoint of
-`[b_min, b_max]`):
+**CPG variant only — look at the engineered gait with no policy** (θ=0 and
+b=0.875, the midpoint of `[b_min, b_max]`):
 
 ```bash
 python scripts/zero_agent.py --task Template-Eigenbot-CPG-Direct-v0 --num_envs 1
@@ -341,11 +355,11 @@ sub-type**:
 > effect.
 
 ```bash
-python scripts/eval_compare.py --task Template-Eigenbot-CPG-Direct-v0 --episodes 40 --num_envs 40 --command_vel 0.3 --seed 123 --headless --out logs/eval_cpg.csv
+python scripts/eval_compare.py --task Template-Eigenbot-Direct-v0 --episodes 40 --num_envs 40 --command_vel 0.3 --seed 123 --headless --out logs/eval_ppo.csv
 ```
 
 ```bash
-python scripts/eval_compare.py --task Template-Eigenbot-Direct-v0 --episodes 40 --num_envs 40 --command_vel 0.3 --seed 123 --headless --out logs/eval_ppo.csv
+python scripts/eval_compare.py --task Template-Eigenbot-CPG-Direct-v0 --episodes 40 --num_envs 40 --command_vel 0.3 --seed 123 --headless --out logs/eval_cpg.csv
 ```
 
 Then diff the two CSVs. **Keep `--episodes`, `--command_vel` and `--seed`
@@ -354,7 +368,7 @@ pin an exact `.pt` instead of taking the newest.
 
 ### Protocol for a fair comparison
 
-1. Both policies trained with the same `--num_envs`, `--max_iterations`, `--seed`
+1. Baseline and variant trained with the same `--num_envs`, `--max_iterations`, `--seed`
    and the same reward config (the reward terms live in the shared
    `eigenbot_env_cfg.py`, so this is automatic unless you edit between runs).
 2. `play.py` both — confirm each is actually locomoting before believing a number.

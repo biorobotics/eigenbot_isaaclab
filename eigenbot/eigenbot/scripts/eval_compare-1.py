@@ -232,8 +232,7 @@ def main():
 
     rows = []
     for batch in range(n_batches):
-        with torch.inference_mode():
-            reset_out = wrapped.reset()
+        reset_out = wrapped.reset()
         obs = reset_out[0] if isinstance(reset_out, tuple) else reset_out
         if isinstance(obs, dict):
             obs = obs.get("policy", next(iter(obs.values())))

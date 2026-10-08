@@ -14,3 +14,10 @@ __pycache__/
 # OS cruft
 .DS_Store
 Thumbs.db
+
+# local patch backups
+*.py.bak
+depth_dump/
+
+# personal scratch, not project files
+Claude outputs/

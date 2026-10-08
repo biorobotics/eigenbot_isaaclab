@@ -37,6 +37,8 @@ N_SCAN = 132  # 12 x 11 height measurement grid
 N_PRIV = 9  # base_lin_vel(3) + zeros(6)
 N_PRIV_LATENT = 41  # mass_params(4) + friction(1) + motor_p(18) + motor_d(18)
 HISTORY_LEN = 10
+DEPTH_OBS_SIZE = 16  # depth frame avg-pooled to this square before entering obs
+N_DEPTH = DEPTH_OBS_SIZE * DEPTH_OBS_SIZE  # 256, appended ONLY when --use_camera
 
 NUM_OBSERVATIONS = N_PROPRIO + N_SCAN + N_PRIV + N_PRIV_LATENT + HISTORY_LEN * N_PROPRIO
 
@@ -181,6 +183,7 @@ class DepthCameraCfg:
     horizontal_fov: float = 87.0
     horizontal_aperture: float = 20.955
     buffer_len: int = 2
+    obs_size: int = 16  # must match DEPTH_OBS_SIZE
 
     near_clip: float = 0.0
     far_clip: float = 2.0

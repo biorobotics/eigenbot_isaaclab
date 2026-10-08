@@ -551,13 +551,21 @@ class EigenbotEnv(DirectRLEnv):
         )
 
         # Full observation
-        obs = torch.cat([
+        obs_parts = [
             obs_proprio,                                                    # 72
             heights,                                                        # 132
             priv_explicit,                                                  # 9
             priv_latent,                                                    # 41
             self.obs_history_buf.view(self.num_envs, -1),                   # 720
-        ], dim=-1)  # = 974
+        ]
+
+        if self.cfg.depth_camera.use_camera:
+            k = self.cfg.depth_camera.obs_size
+            depth_obs = F.adaptive_avg_pool2d(
+                self.depth_buffer[:, -1].unsqueeze(1), (k, k)
+            ).flatten(1)
+            obs_parts.append(depth_obs) # append at the end to keep normal indices
+        obs = torch.cat(obs_parts, dim=-1)
 
         return obs
 

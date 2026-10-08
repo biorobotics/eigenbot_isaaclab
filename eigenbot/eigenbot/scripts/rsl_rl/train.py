@@ -122,6 +122,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         env_cfg.depth_camera.use_camera = args_cli.use_camera
         if args_cli.use_camera and args_cli.num_envs is None:
             env_cfg.scene.num_envs = min(env_cfg.scene.num_envs, env_cfg.depth_camera.camera_num_envs)
+        if args_cli.use_camera:
+            env_cfg.observation_space += env_cfg.depth_camera.obs_size ** 2
     agent_cfg.max_iterations = (
         args_cli.max_iterations if args_cli.max_iterations is not None else agent_cfg.max_iterations
     )
